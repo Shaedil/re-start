@@ -1,5 +1,6 @@
 <script>
     import '@fontsource-variable/geist-mono'
+    import { settings } from './lib/settings-store.svelte.js'
     import Clock from './lib/components/Clock.svelte'
     import Links from './lib/components/Links.svelte'
     import Settings from './lib/components/Settings.svelte'
@@ -12,6 +13,14 @@
     function closeSettings() {
         showSettings = false
     }
+
+    $effect(() => {
+        const fontName = settings.font?.trim() || 'Geist Mono Variable'
+        document.documentElement.style.setProperty(
+            '--font-family',
+            `'${fontName}', monospace`
+        )
+    })
 </script>
 
 <main>

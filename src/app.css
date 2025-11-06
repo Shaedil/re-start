@@ -7,6 +7,7 @@
     --txt-2: oklch(75% 0 0);
     --txt-1: oklch(90% 0 0);
     --txt-err: oklch(70% 0.11 0);
+    --font-family: 'Geist Mono Variable', monospace;
 }
 
 * {
@@ -19,7 +20,7 @@ body {
     background: var(--bg-1);
     color: var(--txt-2);
 
-    font-family: 'Geist Mono Variable', monospace;
+    font-family: var(--font-family);
     font-weight: 400;
     font-size: 100%;
     line-height: 1.5;

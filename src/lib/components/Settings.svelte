@@ -56,17 +56,6 @@
 
         <div class="content">
             <div class="group">
-                <div class="setting-label">time format</div>
-                <div class="radio-group">
-                    <RadioButton bind:group={settings.timeFormat} value="12hr">
-                        12 hour
-                    </RadioButton>
-                    <RadioButton bind:group={settings.timeFormat} value="24hr">
-                        24 hour
-                    </RadioButton>
-                </div>
-            </div>
-            <div class="group">
                 <div class="setting-label">theme</div>
                 <div class="theme-grid">
                     {#each themeNames as themeName}
@@ -101,6 +90,16 @@
                 </div>
             </div>
             <div class="group">
+                <label for="font">font</label>
+                <input
+                    id="font"
+                    type="text"
+                    bind:value={settings.font}
+                    placeholder="e.g., Geist Mono Variable, Monaco, Courier New"
+                />
+            </div>
+
+            <div class="group">
                 <label for="todoist-token">todoist api token</label>
                 <input
                     id="todoist-token"
@@ -125,6 +124,18 @@
                     bind:value={settings.longitude}
                     step="0.01"
                 />
+            </div>
+
+            <div class="group">
+                <div class="setting-label">time format</div>
+                <div class="radio-group">
+                    <RadioButton bind:group={settings.timeFormat} value="12hr">
+                        12 hour
+                    </RadioButton>
+                    <RadioButton bind:group={settings.timeFormat} value="24hr">
+                        24 hour
+                    </RadioButton>
+                </div>
             </div>
             <div class="group">
                 <div class="setting-label">temperature format</div>
