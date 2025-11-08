@@ -48,8 +48,20 @@
         }, msUntilNextSecond)
     }
 
+    function handleVisibilityChange() {
+        if (document.visibilityState === 'visible') {
+            startClock()
+        } else {
+            if (clockInterval) {
+                clearInterval(clockInterval)
+                clockInterval = null
+            }
+        }
+    }
+
     onMount(() => {
         startClock()
+        document.addEventListener('visibilitychange', handleVisibilityChange)
     })
 
     onDestroy(() => {
