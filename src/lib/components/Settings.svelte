@@ -231,6 +231,15 @@
                     {/each}
                 </div>
             </div>
+            <div class="group">
+                <label for="custom-css">custom css</label>
+                <textarea
+                    id="custom-css"
+                    bind:value={settings.customCSS}
+                    placeholder="/* add your custom styles here */"
+                    rows="6"
+                ></textarea>
+            </div>
             <div class="version">
                 <a href="https://github.com/refact0r/re-start" target="_blank">
                     re-start
@@ -309,6 +318,24 @@
         padding: 0.5rem;
         background: var(--bg-2);
         border: 2px solid var(--bg-3);
+    }
+    .group textarea {
+        width: 100%;
+        padding: 0.5rem;
+        background: var(--bg-2);
+        border: 2px solid var(--bg-3);
+        resize: vertical;
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        min-height: 6rem;
+        color: inherit;
+
+        &:focus {
+            outline: none;
+        }
+        &::placeholder {
+            color: var(--txt-3);
+        }
     }
     .links-header {
         display: flex;

@@ -94,18 +94,15 @@
 <div class="panel-wrapper">
     <div class="panel-label">stats</div>
     <div class="panel">
-        <div>load <span class="value">{loadTime} ms</span></div>
-        <div>ping <span class="value">{latency || '?'} ms</span></div>
-        <div>fps <span class="value">{fps}</span></div>
+        <div>load <span class="bright">{loadTime} ms</span></div>
+        <div>ping <span class="bright">{latency || '?'} ms</span></div>
+        <div>fps <span class="bright">{fps}</span></div>
         <div>
-            <span class="value">{viewportWidth}</span> x
-            <span class="value">{viewportHeight}</span>
+            <span class="bright">{viewportWidth}</span> x
+            <span class="bright">{viewportHeight}</span>
         </div>
     </div>
 </div>
 
 <style>
-    .value {
-        color: var(--txt-1);
-    }
 </style>

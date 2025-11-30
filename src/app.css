@@ -97,3 +97,7 @@ input {
 .error {
     color: var(--txt-err);
 }
+
+.bright {
+    color: var(--txt-1);
+}

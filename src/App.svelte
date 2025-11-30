@@ -41,6 +41,16 @@
     })
 
     $effect(() => {
+        let styleEl = document.getElementById('custom-css')
+        if (!styleEl) {
+            styleEl = document.createElement('style')
+            styleEl.id = 'custom-css'
+            document.head.appendChild(styleEl)
+        }
+        styleEl.textContent = settings.customCSS || ''
+    })
+
+    $effect(() => {
         saveSettings(settings)
     })
 </script>

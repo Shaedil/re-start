@@ -1,11 +1,11 @@
 let defaultSettings = {
-    timeFormat: '12hr',
     font: 'Geist Mono Variable',
     currentTheme: 'default',
     tabTitle: '~',
     todoistApiToken: '',
     latitude: null,
     longitude: null,
+    timeFormat: '12hr',
     tempUnit: 'fahrenheit',
     speedUnit: 'mph',
     linksPerColumn: 4,
@@ -28,6 +28,7 @@ let defaultSettings = {
         { title: 'twitter', url: 'https://x.com' },
         { title: 'feedly', url: 'https://feedly.com' },
     ],
+    customCSS: '',
 }
 
 function loadSettings() {

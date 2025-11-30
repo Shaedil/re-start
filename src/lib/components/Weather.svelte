@@ -102,24 +102,24 @@
             <div class="stats">
                 <div class="col">
                     <div>
-                        humi <span class="value"
+                        humi <span class="bright"
                             >{current.relative_humidity_2m}%</span
                         >
                     </div>
                     <div>
-                        prec <span class="value"
+                        prec <span class="bright"
                             >{current.precipitation_probability}%</span
                         >
                     </div>
                 </div>
                 <div class="col">
                     <div>
-                        wind <span class="value"
+                        wind <span class="bright"
                             >{current.wind_speed_10m} {settings.speedUnit}</span
                         >
                     </div>
                     <div>
-                        feel <span class="value"
+                        feel <span class="bright"
                             >{current.apparent_temperature}°</span
                         >
                     </div>
@@ -164,9 +164,6 @@
     .description {
         font-size: 1.25rem;
         color: var(--txt-3);
-    }
-    .value {
-        color: var(--txt-1);
     }
     .stats {
         display: flex;
