@@ -514,7 +514,7 @@ export function stripDateMatch(text, match) {
     return `${before} ${after}`
 }
 
-export function formatTodoistDue(date, hasTime) {
+export function formatTaskDue(date, hasTime) {
     if (!date) return null
     const pad = (n) => String(n).padStart(2, '0')
     const y = date.getFullYear()

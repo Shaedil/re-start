@@ -116,13 +116,33 @@
             </div>
 
             <div class="group">
-                <label for="todoist-token">todoist api token</label>
-                <input
-                    id="todoist-token"
-                    type="password"
-                    bind:value={settings.todoistApiToken}
-                />
+                <div class="setting-label">task backend</div>
+                <div class="radio-group">
+                    <RadioButton
+                        bind:group={settings.taskBackend}
+                        value="local"
+                    >
+                        local
+                    </RadioButton>
+                    <RadioButton
+                        bind:group={settings.taskBackend}
+                        value="todoist"
+                    >
+                        todoist
+                    </RadioButton>
+                </div>
             </div>
+
+            {#if settings.taskBackend === 'todoist'}
+                <div class="group">
+                    <label for="todoist-token">todoist api token</label>
+                    <input
+                        id="todoist-token"
+                        type="password"
+                        bind:value={settings.todoistApiToken}
+                    />
+                </div>
+            {/if}
             <div class="group">
                 <label for="latitude">latitude</label>
                 <input

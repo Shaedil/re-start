@@ -1,9 +1,12 @@
+import TaskBackend from './task-backend.js'
+
 /**
  * Todoist API client using the Sync endpoint for efficient data retrieval
  */
-class TodoistAPI {
-    constructor(token) {
-        this.token = token
+class TodoistBackend extends TaskBackend {
+    constructor(config) {
+        super(config)
+        this.token = config.token
         this.baseUrl = 'https://api.todoist.com/api/v1'
         this.syncTokenKey = 'todoist_sync_token'
         this.dataKey = 'todoist_data'
@@ -148,7 +151,7 @@ class TodoistAPI {
                 }
             })
 
-        return TodoistAPI.sortTasks(mappedTasks)
+        return TodoistBackend.sortTasks(mappedTasks)
     }
 
     /**
@@ -307,4 +310,4 @@ class TodoistAPI {
     }
 }
 
-export default TodoistAPI
+export default TodoistBackend

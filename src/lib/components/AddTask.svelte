@@ -11,7 +11,7 @@
 
     const handleSubmit = (event) => {
         event.preventDefault()
-        onsubmit?.()
+        onsubmit?.(event)
     }
 
     const handleInput = (event) => {

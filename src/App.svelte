@@ -6,7 +6,7 @@
     import Links from './lib/components/Links.svelte'
     import Settings from './lib/components/Settings.svelte'
     import Stats from './lib/components/Stats.svelte'
-    import Todoist from './lib/components/Todoist.svelte'
+    import Tasks from './lib/components/Tasks.svelte'
     import Weather from './lib/components/Weather.svelte'
     import { saveSettings } from './lib/settings-store.svelte.js'
 
@@ -63,7 +63,7 @@
         </div>
         <div class="widgets">
             <Weather />
-            <Todoist />
+            <Tasks />
         </div>
         <Links />
     </div>
