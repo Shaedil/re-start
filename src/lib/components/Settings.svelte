@@ -354,8 +354,8 @@
                 ></textarea>
             </div>
             <div class="version">
+                re-start
                 <a href="https://github.com/refact0r/re-start" target="_blank">
-                    re-start
                     {#if version}v{version}
                     {/if}</a
                 >
