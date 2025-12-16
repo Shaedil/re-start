@@ -117,7 +117,7 @@
     .settings-btn:hover {
         opacity: 1;
     }
-    .settings-btn {
+    .settings-btn.needs-config {
         opacity: 1;
         animation: pulse 1s ease-in-out infinite;
     }
