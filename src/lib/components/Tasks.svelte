@@ -30,6 +30,7 @@
     $effect(() => {
         const backend = settings.taskBackend
         const token = settings.todoistApiToken
+        const googleSignedIn = settings.googleTasksSignedIn
 
         if (untrack(() => initialLoad)) {
             initialLoad = false
@@ -58,8 +59,28 @@
             return
         }
 
+        if (backend === 'google-tasks' && !settings.googleTasksSignedIn) {
+            api = null
+            tasks = []
+            syncing = false
+            error = 'not signed in to google'
+            return
+        }
+
         try {
-            api = createTaskBackend(backend, { token })
+            if (backend === 'google-tasks') {
+                api = createTaskBackend(backend)
+
+                if (!api.getIsSignedIn()) {
+                    settings.googleTasksSignedIn = false
+                    error = 'google sign in expired'
+                    syncing = false
+                    return
+                }
+            } else {
+                api = createTaskBackend(backend, { token })
+            }
+
             if (clearLocalData) {
                 api.clearLocalData()
                 tasks = []

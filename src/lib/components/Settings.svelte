@@ -7,11 +7,52 @@
     } from '../settings-store.svelte.js'
     import { themeNames, themes } from '../themes.js'
     import RadioButton from './RadioButton.svelte'
+    import { createTaskBackend } from '../backends/index.js'
 
     let { showSettings = false, closeSettings } = $props()
 
     // @ts-ignore
     const version = __APP_VERSION__
+
+    let googleTasksApi = $state(null)
+    let signingIn = $state(false)
+    let signInError = $state('')
+
+    async function handleGoogleSignIn() {
+        try {
+            signingIn = true
+            signInError = ''
+
+            if (!googleTasksApi) {
+                googleTasksApi = createTaskBackend('google-tasks')
+            }
+
+            await googleTasksApi.signIn()
+            settings.googleTasksSignedIn = true
+            saveSettings(settings)
+        } catch (err) {
+            console.error('Google sign-in error:', err)
+            signInError = 'sign in failed'
+            settings.googleTasksSignedIn = false
+        } finally {
+            signingIn = false
+        }
+    }
+
+    async function handleGoogleSignOut() {
+        try {
+            if (!googleTasksApi) {
+                googleTasksApi = createTaskBackend('google-tasks')
+            }
+
+            await googleTasksApi.signOut()
+            settings.googleTasksSignedIn = false
+            saveSettings(settings)
+            signInError = ''
+        } catch (err) {
+            console.error('Google sign-out error:', err)
+        }
+    }
 
     function addLink() {
         settings.links = [...settings.links, { title: '', url: '' }]
@@ -226,6 +267,12 @@
                     >
                         todoist
                     </RadioButton>
+                    <RadioButton
+                        bind:group={settings.taskBackend}
+                        value="google-tasks"
+                    >
+                        google tasks
+                    </RadioButton>
                 </div>
             </div>
 
@@ -237,6 +284,27 @@
                         type="password"
                         bind:value={settings.todoistApiToken}
                     />
+                </div>
+            {/if}
+
+            {#if settings.taskBackend === 'google-tasks'}
+                <div class="group">
+                    <div class="setting-label">google tasks authentication</div>
+                    <button
+                        class="button"
+                        onclick={settings.googleTasksSignedIn
+                            ? handleGoogleSignOut
+                            : handleGoogleSignIn}
+                        disabled={signingIn}
+                    >
+                        [{settings.googleTasksSignedIn
+                            ? 'sign out'
+                            : signInError
+                              ? signInError
+                              : signingIn
+                                ? 'signing in...'
+                                : 'sign in with google'}]
+                    </button>
                 </div>
             {/if}
 

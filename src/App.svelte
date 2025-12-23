@@ -15,7 +15,9 @@
     let needsConfiguration = $derived(
         (settings.locationMode === 'manual' &&
             (settings.latitude === null || settings.longitude === null)) ||
-            (settings.taskBackend === 'todoist' && !settings.todoistApiToken)
+            (settings.taskBackend === 'todoist' && !settings.todoistApiToken) ||
+            (settings.taskBackend === 'google-tasks' &&
+                !settings.googleTasksSignedIn)
     )
 
     function closeSettings() {

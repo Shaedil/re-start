@@ -4,6 +4,7 @@ let defaultSettings = {
     tabTitle: '~',
     taskBackend: 'local',
     todoistApiToken: '',
+    googleTasksSignedIn: false,
     locationMode: 'manual',
     latitude: null,
     longitude: null,
