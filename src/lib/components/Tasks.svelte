@@ -2,6 +2,7 @@
     import { onMount, onDestroy, untrack } from 'svelte'
     import { createTaskBackend } from '../backends/index.js'
     import { settings } from '../settings-store.svelte.js'
+    import { isChrome } from '../browser-detect.js'
     import AddTask from './AddTask.svelte'
     import {
         parseSmartDate,
@@ -56,6 +57,14 @@
             tasks = []
             syncing = false
             error = 'no todoist api token'
+            return
+        }
+
+        if (backend === 'google-tasks' && !isChrome()) {
+            api = null
+            tasks = []
+            syncing = false
+            error = 'google tasks only works in chrome'
             return
         }
 

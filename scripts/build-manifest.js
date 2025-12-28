@@ -5,6 +5,12 @@ const browser = process.argv[2] || 'firefox'
 const distPath = process.argv[3] || './dist'
 const manifestPath = './public/manifest.json'
 
+// OAuth2 client IDs
+const CLIENT_IDS = {
+    dev: '489393578728-r6p53q4oe7ngcm6r4kmtgbk17s2cgpk8.apps.googleusercontent.com',
+    prod: '489393578728-s8v9trudldppumhduidbko2v82i79hv5.apps.googleusercontent.com'
+}
+
 // Read the source manifest
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
 
@@ -14,9 +20,19 @@ if (browser === 'chrome') {
     delete manifest.chrome_settings_overrides
     // Remove Firefox-specific settings
     delete manifest.browser_specific_settings
+    // Keep oauth2 for Chrome
+
+    // Replace client_id based on CLIENT_ENV environment variable
+    const clientEnv = process.env.CLIENT_ENV
+    if (clientEnv === 'dev' || clientEnv === 'prod') {
+        if (manifest.oauth2) {
+            manifest.oauth2.client_id = CLIENT_IDS[clientEnv]
+        }
+    }
 } else if (browser === 'firefox') {
-    // Firefox manifest is already complete in the source
-    // No modifications needed
+    // Remove Chrome-specific oauth2 configuration
+    delete manifest.oauth2
+    // Firefox doesn't support chrome.identity.getAuthToken
 }
 
 // Ensure dist directory exists

@@ -9,14 +9,19 @@
     import Tasks from './lib/components/Tasks.svelte'
     import Weather from './lib/components/Weather.svelte'
     import { saveSettings } from './lib/settings-store.svelte.js'
+    import { isChrome } from './lib/browser-detect.js'
 
     let showSettings = $state(false)
+
+    // Check if Google Tasks is available (Chrome only)
+    const googleTasksAvailable = isChrome()
 
     let needsConfiguration = $derived(
         (settings.locationMode === 'manual' &&
             (settings.latitude === null || settings.longitude === null)) ||
             (settings.taskBackend === 'todoist' && !settings.todoistApiToken) ||
             (settings.taskBackend === 'google-tasks' &&
+                googleTasksAvailable &&
                 !settings.googleTasksSignedIn)
     )
 

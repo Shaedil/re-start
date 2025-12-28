@@ -1,94 +1,129 @@
 import TaskBackend from './task-backend.js'
 
 /**
- * Google Tasks API client for Chrome/Firefox Extensions
- * Uses browser.identity API for secure OAuth
+ * Google Tasks API client for Chrome Extensions
+ * Uses chrome.identity.getAuthToken for OAuth (Chrome-only)
  */
 class GoogleTasksBackendExtension extends TaskBackend {
     constructor(config = {}) {
         super(config)
-        this.clientId =
-            '489393578728-ij3qkagfga69u9vmcdpknn7aqlpb2olr.apps.googleusercontent.com'
-
         this.scopes = ['https://www.googleapis.com/auth/tasks']
         this.baseUrl = 'https://tasks.googleapis.com/tasks/v1'
 
         this.dataKey = 'google_tasks_data'
         this.tasklistIdKey = 'google_tasks_default_list'
-        this.tokenKey = 'google_tasks_token'
+        this.signedInKey = 'google_tasks_signed_in'
         this.data = JSON.parse(localStorage.getItem(this.dataKey) ?? '{}')
         this.defaultTasklistId =
             localStorage.getItem(this.tasklistIdKey) ?? '@default'
-        this.accessToken = localStorage.getItem(this.tokenKey)
-        this.isSignedIn = !!this.accessToken
+        this.isSignedIn = localStorage.getItem(this.signedInKey) === 'true'
+        this.accessToken = null
+        this.tokenPromise = null // Prevent multiple simultaneous token requests
     }
 
     /**
-     * Get Chrome Identity API (works on Firefox too with polyfill)
+     * Check if Chrome Identity API is available
      */
-    getIdentityAPI() {
-        // Chrome uses chrome.identity, Firefox uses browser.identity
-        return chrome?.identity ?? browser?.identity ?? null
+    isChromeIdentityAvailable() {
+        return (
+            typeof chrome !== 'undefined' &&
+            chrome.identity &&
+            chrome.identity.getAuthToken
+        )
     }
 
     /**
-     * Sign in using browser's OAuth flow
-     * This is MORE SECURE - browser handles auth, no credentials in your code!
+     * Get a valid access token using Chrome's identity API
+     * This automatically handles token caching and refresh
      */
-    async signIn() {
-        const identity = this.getIdentityAPI()
-        if (!identity) {
+    async getAuthToken(interactive = false) {
+        if (!this.isChromeIdentityAvailable()) {
             throw new Error(
-                'Browser identity API not available. Are you running as an extension?'
+                'Chrome identity API not available. Google Tasks only works in Chrome.'
             )
         }
 
-        return new Promise((resolve, reject) => {
-            const redirectURL = identity.getRedirectURL()
-            const authURL = new URL('https://accounts.google.com/o/oauth2/auth')
-            authURL.searchParams.set('client_id', this.clientId)
-            authURL.searchParams.set('response_type', 'token')
-            authURL.searchParams.set('redirect_uri', redirectURL)
-            authURL.searchParams.set('scope', this.scopes.join(' '))
+        // If already getting a token, wait for that to complete
+        if (this.tokenPromise) {
+            return this.tokenPromise
+        }
 
-            identity.launchWebAuthFlow(
+        this.tokenPromise = new Promise((resolve, reject) => {
+            chrome.identity.getAuthToken(
                 {
-                    url: authURL.href,
-                    interactive: true,
+                    interactive: interactive,
+                    scopes: this.scopes,
                 },
-                (responseURL) => {
-                    // Check for errors (works in both Chrome and Firefox)
-                    const runtime = chrome?.runtime ?? browser?.runtime
-                    if (runtime?.lastError) {
-                        reject(new Error(runtime.lastError.message))
+                (token) => {
+                    this.tokenPromise = null
+
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message))
                         return
                     }
 
-                    // Extract access token from response URL
-                    const url = new URL(responseURL)
-                    const params = new URLSearchParams(url.hash.substring(1))
-                    const accessToken = params.get('access_token')
-
-                    if (accessToken) {
-                        this.accessToken = accessToken
-                        localStorage.setItem(this.tokenKey, accessToken)
-                        this.isSignedIn = true
-                        resolve(accessToken)
-                    } else {
-                        reject(new Error('No access token in response'))
+                    if (!token) {
+                        reject(new Error('No token returned'))
+                        return
                     }
+
+                    this.accessToken = token
+                    resolve(token)
                 }
             )
         })
+
+        return this.tokenPromise
     }
 
     /**
-     * Sign out
+     * Sign in using Chrome's identity API
+     * This handles OAuth flow automatically and keeps users signed in
+     */
+    async signIn() {
+        if (!this.isChromeIdentityAvailable()) {
+            throw new Error(
+                'Chrome identity API not available. Google Tasks only works in Chrome.'
+            )
+        }
+
+        try {
+            await this.getAuthToken(true)
+            this.isSignedIn = true
+            localStorage.setItem(this.signedInKey, 'true')
+            return this.accessToken
+        } catch (error) {
+            this.isSignedIn = false
+            localStorage.setItem(this.signedInKey, 'false')
+            throw error
+        }
+    }
+
+    /**
+     * Sign out and clear cached tokens
      */
     async signOut() {
+        if (!this.isChromeIdentityAvailable()) {
+            throw new Error(
+                'Chrome identity API not available. Google Tasks only works in Chrome.'
+            )
+        }
+
+        // Remove cached token from Chrome
+        if (this.accessToken) {
+            await new Promise((resolve) => {
+                chrome.identity.removeCachedAuthToken(
+                    { token: this.accessToken },
+                    () => {
+                        resolve()
+                    }
+                )
+            })
+        }
+
         this.accessToken = null
         this.isSignedIn = false
-        localStorage.removeItem(this.tokenKey)
+        localStorage.setItem(this.signedInKey, 'false')
         this.clearLocalData()
     }
 
@@ -101,30 +136,70 @@ class GoogleTasksBackendExtension extends TaskBackend {
 
     /**
      * Make an authenticated API request
+     * Chrome identity API automatically handles token refresh
      */
     async apiRequest(endpoint, options = {}) {
-        if (!this.accessToken) {
+        if (!this.isSignedIn) {
             throw new Error('Not signed in')
         }
+
+        // Get a fresh token (Chrome caches it and auto-refreshes as needed)
+        let token = await this.getAuthToken(false)
 
         const url = `${this.baseUrl}${endpoint}`
         const response = await fetch(url, {
             ...options,
             headers: {
-                Authorization: `Bearer ${this.accessToken}`,
+                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 ...options.headers,
             },
         })
 
         if (!response.ok) {
-            // Token might be expired, try to refresh by signing in again
+            // If 401, invalidate cached token and try once more with interactive=false
             if (response.status === 401) {
-                this.accessToken = null
-                this.isSignedIn = false
-                localStorage.removeItem(this.tokenKey)
-                throw new Error('Authentication expired. Please sign in again.')
+                try {
+                    // Remove the invalid token from cache
+                    await new Promise((resolve) => {
+                        chrome.identity.removeCachedAuthToken(
+                            { token: token },
+                            () => {
+                                resolve()
+                            }
+                        )
+                    })
+
+                    // Get a new token
+                    token = await this.getAuthToken(false)
+
+                    // Retry the request with new token
+                    const retryResponse = await fetch(url, {
+                        ...options,
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                            ...options.headers,
+                        },
+                    })
+
+                    if (!retryResponse.ok) {
+                        throw new Error(
+                            `API request failed: ${retryResponse.status} ${retryResponse.statusText}`
+                        )
+                    }
+
+                    return retryResponse.json()
+                } catch (error) {
+                    // Token refresh failed, user needs to sign in again
+                    this.isSignedIn = false
+                    localStorage.setItem(this.signedInKey, 'false')
+                    throw new Error(
+                        'Authentication expired. Please sign in again.'
+                    )
+                }
             }
+
             throw new Error(
                 `API request failed: ${response.status} ${response.statusText}`
             )
@@ -165,12 +240,14 @@ class GoogleTasksBackendExtension extends TaskBackend {
             // Get tasks from all lists in parallel
             if (resourceTypes.includes('tasks')) {
                 // Only fetch completed tasks from the last 24 hours to avoid hitting the 100-task limit
-                const completedMin = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+                const completedMin = new Date(
+                    Date.now() - 24 * 60 * 60 * 1000
+                ).toISOString()
 
                 const taskPromises = this.data.tasklists.map(
                     async (tasklist) => {
                         const data = await this.apiRequest(
-                            `/lists/${tasklist.id}/tasks?showCompleted=true&showHidden=true&showAssigned=true&maxResults=100&completedMin=${encodeURIComponent(completedMin)}`
+                            `/lists/${tasklist.id}/tasks?showCompleted=true&showHidden=true&showAssigned=true&maxResults=100`
                         )
                         // Add tasklist info to each task
                         return (data.items || []).map((task) => ({
@@ -183,6 +260,22 @@ class GoogleTasksBackendExtension extends TaskBackend {
 
                 const taskArrays = await Promise.all(taskPromises)
                 this.data.tasks = taskArrays.flat()
+
+                // Filter out old completed tasks (keep last 24 hours)
+                const completedThreshold = new Date(
+                    Date.now() - 24 * 60 * 60 * 1000
+                )
+                this.data.tasks = this.data.tasks.filter((task) => {
+                    // Keep all uncompleted tasks
+                    if (task.status !== 'completed') return true
+                    // Keep recently completed tasks
+                    if (task.completed) {
+                        const completedAt = new Date(task.completed)
+                        return completedAt > completedThreshold
+                    }
+                    // Drop completed tasks without a completion date
+                    return false
+                })
             }
 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data))

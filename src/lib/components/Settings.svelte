@@ -8,8 +8,12 @@
     import { themeNames, themes } from '../themes.js'
     import RadioButton from './RadioButton.svelte'
     import { createTaskBackend } from '../backends/index.js'
+    import { isChrome } from '../browser-detect.js'
 
     let { showSettings = false, closeSettings } = $props()
+
+    // Check if Google Tasks is available (Chrome only)
+    const googleTasksAvailable = isChrome()
 
     // @ts-ignore
     const version = __APP_VERSION__
@@ -267,12 +271,14 @@
                     >
                         todoist
                     </RadioButton>
-                    <RadioButton
-                        bind:group={settings.taskBackend}
-                        value="google-tasks"
-                    >
-                        google tasks
-                    </RadioButton>
+                    {#if googleTasksAvailable}
+                        <RadioButton
+                            bind:group={settings.taskBackend}
+                            value="google-tasks"
+                        >
+                            google tasks
+                        </RadioButton>
+                    {/if}
                 </div>
             </div>
 

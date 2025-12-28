@@ -1,6 +1,6 @@
 import TodoistBackend from './todoist-backend.js'
 import LocalStorageBackend from './localstorage-backend.js'
-import GoogleTasksBackendExtension from './google-tasks-backend-chrome.js'
+import GoogleTasksBackendExtension from './google-tasks-backend.js'
 
 export function createTaskBackend(type, config) {
     switch (type) {
