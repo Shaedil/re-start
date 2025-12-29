@@ -40,8 +40,12 @@
         }
 
         // Split around project match and try each half
-        const leftHalf = newTaskContent.slice(0, parsedProject.match.start).trimEnd()
-        const rightHalf = newTaskContent.slice(parsedProject.match.end).trimStart()
+        const leftHalf = newTaskContent
+            .slice(0, parsedProject.match.start)
+            .trimEnd()
+        const rightHalf = newTaskContent
+            .slice(parsedProject.match.end)
+            .trimStart()
 
         // Try left half first
         const leftResult = parseSmartDate(leftHalf, {
@@ -57,8 +61,10 @@
         })
         if (rightResult) {
             // Offset positions to account for stripped whitespace and project
-            const rightStartOffset = parsedProject.match.end +
-                (newTaskContent.slice(parsedProject.match.end).length - rightHalf.length)
+            const rightStartOffset =
+                parsedProject.match.end +
+                (newTaskContent.slice(parsedProject.match.end).length -
+                    rightHalf.length)
             return {
                 ...rightResult,
                 match: {
@@ -350,7 +356,7 @@
             <div class="widget-header">
                 {#if settings.taskBackend === 'todoist'}
                     <a
-                        href="https://todoist.com/app"
+                        href="https://app.todoist.com/app"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
