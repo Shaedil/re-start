@@ -114,7 +114,7 @@
             forecast = data.forecast
         } catch (err) {
             error = 'failed to load weather'
-            console.error(err)
+            console.error('weather load failed:', err)
         } finally {
             loading = false
         }

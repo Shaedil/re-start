@@ -21,7 +21,7 @@ class LocalStorageBackend extends TaskBackend {
         try {
             return JSON.parse(stored)
         } catch (error) {
-            console.error('Failed to parse local tasks:', error)
+            console.error('failed to parse local tasks:', error)
             return { items: [] }
         }
     }

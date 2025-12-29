@@ -46,12 +46,9 @@ class TodoistBackend extends TaskBackend {
             this.syncToken = data.sync_token
             localStorage.setItem(this.syncTokenKey, this.syncToken)
 
-            console.log(data)
-
             return data
         } catch (error) {
             if (!isRetry && this.syncToken !== '*') {
-                console.log('retrying with full sync...')
                 this.syncToken = '*'
                 localStorage.setItem(this.syncTokenKey, this.syncToken)
                 return this.sync(resourceTypes, true)
@@ -311,8 +308,6 @@ class TodoistBackend extends TaskBackend {
         }
 
         const data = await response.json()
-
-        console.log(data)
 
         return data
     }

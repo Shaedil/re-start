@@ -35,7 +35,7 @@
             settings.googleTasksSignedIn = true
             saveSettings(settings)
         } catch (err) {
-            console.error('Google sign-in error:', err)
+            console.error('google sign in failed:', err)
             signInError = 'sign in failed'
             settings.googleTasksSignedIn = false
         } finally {
@@ -54,7 +54,7 @@
             saveSettings(settings)
             signInError = ''
         } catch (err) {
-            console.error('Google sign-out error:', err)
+            console.error('google sign out failed:', err)
         }
     }
 

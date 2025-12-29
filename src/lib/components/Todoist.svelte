@@ -41,9 +41,6 @@
             dateFormat: settings.dateFormat,
         })
         parsedDate = parsed
-        if (parsed) {
-            console.log('Parsed date:', parsed)
-        }
     })
 
     async function initializeAPI(token, clearLocalData = false) {

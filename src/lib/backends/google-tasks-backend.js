@@ -254,11 +254,10 @@ class GoogleTasksBackendExtension extends TaskBackend {
             }
 
             localStorage.setItem(this.dataKey, JSON.stringify(this.data))
-            console.log('Google Tasks sync complete:', this.data)
 
             return this.data
         } catch (error) {
-            console.error('Google Tasks sync error:', error)
+            console.error('google tasks sync failed:', error)
             throw error
         }
     }

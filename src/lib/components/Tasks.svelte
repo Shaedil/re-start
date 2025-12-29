@@ -137,7 +137,7 @@
             await loadTasks(true)
         } catch (err) {
             error = `failed to initialize ${backend} backend`
-            console.error(err)
+            console.error('backend init failed:', err)
             syncing = false
         }
     }
@@ -172,7 +172,7 @@
             } else {
                 error = `failed to sync tasks`
             }
-            console.error(err)
+            console.error('task sync failed:', err)
         } finally {
             if (showSyncing) syncing = false
         }
@@ -207,7 +207,7 @@
             newTaskContent = ''
             await loadTasks()
         } catch (err) {
-            console.error('Failed to add task:', err)
+            console.error('failed to add task:', err)
         } finally {
             addingTask = false
         }
@@ -239,7 +239,7 @@
             }
             await loadTasks()
         } catch (err) {
-            console.error(err)
+            console.error('task toggle failed:', err)
             await loadTasks()
         } finally {
             togglingTasks.delete(taskId)
@@ -253,7 +253,7 @@
             await api.deleteTask(taskId)
             await loadTasks()
         } catch (err) {
-            console.error('Failed to delete task:', err)
+            console.error('failed to delete task:', err)
             await loadTasks()
         }
     }
