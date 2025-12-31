@@ -39,6 +39,7 @@
 <style>
     .panel {
         display: flex;
+        gap: 1.5rem;
     }
     .link:hover span {
         color: var(--txt-2);
@@ -47,6 +48,6 @@
         color: var(--txt-3);
     }
     .column {
-        width: 100%;
+        flex-grow: 1;
     }
 </style>

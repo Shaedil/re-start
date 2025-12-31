@@ -33,6 +33,11 @@ let defaultSettings = {
         { title: 'feedly', url: 'https://feedly.com' },
     ],
     customCSS: '',
+    showClock: true,
+    showStats: true,
+    showWeather: true,
+    showTasks: true,
+    showLinks: true,
 }
 
 function loadSettings() {

@@ -3,6 +3,8 @@
     import WeatherAPI from '../weather-api.js'
     import { settings } from '../settings-store.svelte.js'
 
+    let { class: className = '' } = $props()
+
     let current = $state(null)
     let forecast = $state([])
     let loading = $state(false)
@@ -135,7 +137,7 @@
     })
 </script>
 
-<div class="panel-wrapper">
+<div class="panel-wrapper {className}">
     <button class="widget-label" onclick={refreshWeather} disabled={loading}>
         {loading ? 'loading...' : 'weather'}
     </button>
@@ -202,6 +204,9 @@
 <style>
     .panel-wrapper {
         flex-shrink: 0;
+    }
+    .panel-wrapper.expand {
+        flex-grow: 1;
     }
     .temp {
         font-size: 2rem;

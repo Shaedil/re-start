@@ -1,6 +1,8 @@
 <script>
     import { onMount, onDestroy } from 'svelte'
 
+    let { class: className = '' } = $props()
+
     let loadTime = $state(0)
     let latency = $state(null)
     let viewportWidth = $state(0)
@@ -91,7 +93,7 @@
     })
 </script>
 
-<div class="panel-wrapper">
+<div class="panel-wrapper {className}">
     <div class="panel-label">stats</div>
     <div class="panel">
         <div>load <span class="bright">{loadTime} ms</span></div>
@@ -105,4 +107,7 @@
 </div>
 
 <style>
+    .panel-wrapper.expand {
+        flex-grow: 1;
+    }
 </style>

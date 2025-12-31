@@ -70,15 +70,29 @@
 
 <main>
     <div class="container">
-        <div class="top">
-            <Clock />
-            <Stats />
-        </div>
-        <div class="widgets">
-            <Weather />
-            <Tasks />
-        </div>
-        <Links />
+        {#if settings.showClock || settings.showStats}
+            <div class="top">
+                {#if settings.showClock}
+                    <Clock />
+                {/if}
+                {#if settings.showStats}
+                    <Stats class={!settings.showClock ? 'expand' : ''} />
+                {/if}
+            </div>
+        {/if}
+        {#if settings.showWeather || settings.showTasks}
+            <div class="widgets">
+                {#if settings.showWeather}
+                    <Weather class={!settings.showTasks ? 'expand' : ''} />
+                {/if}
+                {#if settings.showTasks}
+                    <Tasks />
+                {/if}
+            </div>
+        {/if}
+        {#if settings.showLinks}
+            <Links />
+        {/if}
     </div>
 
     <button

@@ -7,6 +7,7 @@
     } from '../settings-store.svelte.js'
     import { themeNames, themes } from '../themes.js'
     import RadioButton from './RadioButton.svelte'
+    import Checkbox from './Checkbox.svelte'
     import { createTaskBackend } from '../backends/index.js'
     import { isChrome } from '../browser-detect.js'
 
@@ -202,6 +203,18 @@
         </div>
 
         <div class="content">
+            <div class="group">
+                <div class="setting-label">widgets</div>
+                <div class="checkbox-group">
+                    <Checkbox bind:checked={settings.showClock}>clock</Checkbox>
+                    <Checkbox bind:checked={settings.showStats}>stats</Checkbox>
+                    <Checkbox bind:checked={settings.showWeather}>
+                        weather
+                    </Checkbox>
+                    <Checkbox bind:checked={settings.showTasks}>tasks</Checkbox>
+                    <Checkbox bind:checked={settings.showLinks}>links</Checkbox>
+                </div>
+            </div>
             <div class="group">
                 <div class="setting-label">theme</div>
                 <div class="theme-grid">
@@ -671,7 +684,8 @@
         font-size: 0.9rem;
         flex: 1;
     }
-    .radio-group {
+    .radio-group,
+    .checkbox-group {
         display: flex;
         gap: 3ch;
     }
