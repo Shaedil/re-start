@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "setup": "",
-        "run": ""
+        "setup": "npm i",
+        "run": "npm run dev"
     }
 }
