@@ -13,7 +13,7 @@ features:
 - custom css support
 - lightweight & performant (~100kb including fonts, loads in <50ms)
 
-<img width="2331" height="1319" alt="image" src="https://github.com/user-attachments/assets/e3164af7-fc42-4caf-81ee-a049e05b84c7" />
+<img alt="screenshot" src="files/screenshot.png" />
 
 ## installation
 
