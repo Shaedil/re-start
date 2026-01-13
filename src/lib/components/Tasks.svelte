@@ -22,6 +22,14 @@
     let initialLoad = $state(true)
     let previousToken = $state(null)
     let taskCount = $derived(tasks.filter((task) => !task.checked).length)
+    let taskLabel = $derived(taskCount === 1 ? 'task' : 'tasks')
+    let backendUrl = $derived.by(() => {
+        if (settings.taskBackend === 'todoist')
+            return 'https://app.todoist.com/app'
+        if (settings.taskBackend === 'google-tasks')
+            return 'https://tasks.google.com'
+        return null
+    })
     let newTaskContent = $state('')
     let addingTask = $state(false)
     let togglingTasks = $state(new Set())
@@ -128,40 +136,33 @@
         initializeAPI(backend, token, tokenChanged)
     })
 
+    function resetState(errorMessage) {
+        api = null
+        tasks = []
+        availableProjects = []
+        syncing = false
+        error = errorMessage
+    }
+
     async function initializeAPI(backend, token, clearLocalData = false) {
         if (backend === 'todoist' && !token) {
-            api = null
-            tasks = []
-            availableProjects = []
-            syncing = false
-            error = 'no todoist api token'
+            resetState('no todoist api token')
             return
         }
 
         if (backend === 'google-tasks' && !isChrome()) {
-            api = null
-            tasks = []
-            availableProjects = []
-            syncing = false
-            error = 'google tasks only works in chrome'
+            resetState('google tasks only works in chrome')
             return
         }
 
         if (backend === 'google-tasks' && !settings.googleTasksSignedIn) {
-            api = null
-            tasks = []
-            availableProjects = []
-            syncing = false
-            error = 'not signed in to google'
+            resetState('not signed in to google')
             return
         }
 
         try {
-            if (backend === 'google-tasks') {
-                api = createTaskBackend(backend)
-            } else {
-                api = createTaskBackend(backend, { token })
-            }
+            const config = backend === 'google-tasks' ? undefined : { token }
+            api = createTaskBackend(backend, config)
 
             if (clearLocalData) {
                 api.clearLocalData()
@@ -356,16 +357,11 @@
     }
 
     function getRelativeDateString(diffDays, dueDate) {
-        const isYesterday = diffDays === -1
-        const isToday = diffDays === 0
-        const isTomorrow = diffDays === 1
-        const isWithinWeek = diffDays >= 2 && diffDays < 7
+        if (diffDays === -1) return 'yesterday'
+        if (diffDays === 0) return 'today'
+        if (diffDays === 1) return 'tmrw'
 
-        if (isYesterday) return 'yesterday'
-        if (isToday) return 'today'
-        if (isTomorrow) return 'tmrw'
-
-        if (isWithinWeek) {
+        if (diffDays >= 2 && diffDays < 7) {
             return dueDate
                 .toLocaleDateString('en-US', { weekday: 'short' })
                 .toLowerCase()
@@ -401,28 +397,19 @@
             <div class="error">{error}</div>
         {:else}
             <div class="widget-header">
-                {#if settings.taskBackend === 'todoist'}
+                {#if backendUrl}
                     <a
-                        href="https://app.todoist.com/app"
+                        href={backendUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                     >
                         <span class="bright">{taskCount}</span>
-                        task{taskCount === 1 ? '' : 's'}
-                    </a>
-                {:else if settings.taskBackend === 'google-tasks'}
-                    <a
-                        href="https://tasks.google.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <span class="bright">{taskCount}</span>
-                        task{taskCount === 1 ? '' : 's'}
+                        {taskLabel}
                     </a>
                 {:else}
                     <span>
                         <span class="bright">{taskCount}</span>
-                        task{taskCount === 1 ? '' : 's'}
+                        {taskLabel}
                     </span>
                 {/if}
                 <AddTask
