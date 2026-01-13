@@ -9,7 +9,10 @@
         stripDateMatch,
         formatTaskDue,
     } from '../utils/date-matcher.js'
-    import { parseProjectMatch, stripProjectMatch } from '../utils/project-matcher.js'
+    import {
+        parseProjectMatch,
+        stripProjectMatch,
+    } from '../utils/project-matcher.js'
 
     let api = null
     let tasks = $state([])
@@ -550,7 +553,7 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .task.completed .task-title {
+    .task.completed .task-title input {
         text-decoration: line-through;
     }
     .overdue {
