@@ -27,6 +27,14 @@
         oninput?.(event.target.value)
     }
 
+    let overlayElement
+
+    const syncScroll = () => {
+        if (inputElement && overlayElement) {
+            overlayElement.scrollLeft = inputElement.scrollLeft
+        }
+    }
+
     // Build text segments with multiple highlights
     const segments = $derived.by(() => {
         if (!value) return []
@@ -79,7 +87,7 @@
 <form class:show onsubmit={handleSubmit}>
     <span class="dark">+</span>
     <div class="input-shell">
-        <div class="input-overlay" aria-hidden="true">
+        <div class="input-overlay" bind:this={overlayElement} aria-hidden="true">
             {#if showPlaceholder}
                 <span class="placeholder">{placeholder}</span>
             {:else}
@@ -101,6 +109,7 @@
             bind:value
             {placeholder}
             oninput={handleInput}
+            onscroll={syncScroll}
             disabled={disabled || loading}
             aria-label="Add task"
             autocomplete="off"
