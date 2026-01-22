@@ -44,13 +44,21 @@ class TodoistBackend extends TaskBackend {
             this.updateLocalData(data)
 
             this.syncToken = data.sync_token
-            localStorage.setItem(this.syncTokenKey, this.syncToken)
+            try {
+                localStorage.setItem(this.syncTokenKey, this.syncToken)
+            } catch (error) {
+                console.error('failed to save sync token:', error)
+            }
 
             return data
         } catch (error) {
             if (!isRetry && this.syncToken !== '*') {
                 this.syncToken = '*'
-                localStorage.setItem(this.syncTokenKey, this.syncToken)
+                try {
+                    localStorage.setItem(this.syncTokenKey, this.syncToken)
+                } catch (storageError) {
+                    console.error('failed to reset sync token:', storageError)
+                }
                 return this.sync(resourceTypes, true)
             }
             throw error
@@ -74,7 +82,15 @@ class TodoistBackend extends TaskBackend {
             this.mergeData('projects', syncData.projects)
         }
 
-        localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+        try {
+            localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+        } catch (error) {
+            console.error('failed to save todoist data to localStorage:', error)
+            if (error.name === 'QuotaExceededError') {
+                throw new Error('localStorage quota exceeded - please clear some data')
+            }
+            throw error
+        }
     }
 
     /**
@@ -181,15 +197,18 @@ class TodoistBackend extends TaskBackend {
 
             // If both have no due dates, non-project tasks come first
             if (!a.due_date && !b.due_date) {
-                const aHasProject = a.project_id && a.project_name !== 'Inbox'
-                const bHasProject = b.project_id && b.project_name !== 'Inbox'
+                const aHasProject = a.project_id && a.project_name && a.project_name !== 'Inbox'
+                const bHasProject = b.project_id && b.project_name && b.project_name !== 'Inbox'
 
                 if (aHasProject !== bHasProject) {
                     return aHasProject ? 1 : -1
                 }
             }
 
-            return a.child_order - b.child_order
+            // Sort by child_order, defaulting to 0 if undefined
+            const aOrder = a.child_order ?? 0
+            const bOrder = b.child_order ?? 0
+            return aOrder - bOrder
         })
     }
 

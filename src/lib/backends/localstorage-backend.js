@@ -30,7 +30,15 @@ class LocalStorageBackend extends TaskBackend {
      * Save tasks to localStorage
      */
     saveData() {
-        localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+        try {
+            localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+        } catch (error) {
+            console.error('failed to save data to localStorage:', error)
+            if (error.name === 'QuotaExceededError') {
+                throw new Error('localStorage quota exceeded - please clear some data')
+            }
+            throw error
+        }
     }
 
     /**
@@ -121,15 +129,18 @@ class LocalStorageBackend extends TaskBackend {
 
             // If both have no due dates, non-project tasks come first
             if (!a.due_date && !b.due_date) {
-                const aHasProject = a.project_id && a.project_name !== 'Inbox'
-                const bHasProject = b.project_id && b.project_name !== 'Inbox'
+                const aHasProject = a.project_id && a.project_name && a.project_name !== 'Inbox'
+                const bHasProject = b.project_id && b.project_name && b.project_name !== 'Inbox'
 
                 if (aHasProject !== bHasProject) {
                     return aHasProject ? 1 : -1
                 }
             }
 
-            return a.child_order - b.child_order
+            // Sort by child_order, defaulting to 0 if undefined
+            const aOrder = a.child_order ?? 0
+            const bOrder = b.child_order ?? 0
+            return aOrder - bOrder
         })
     }
 

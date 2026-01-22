@@ -197,23 +197,30 @@ class GoogleTasksBackendExtension extends TaskBackend {
      */
     async sync(resourceTypes = ['tasklists', 'tasks']) {
         try {
+            let newTasklists = this.data.tasklists
+            let newTasks = this.data.tasks
+
             // Get task lists
             if (resourceTypes.includes('tasklists')) {
                 const data = await this.apiRequest(
                     '/users/@me/lists?maxResults=20'
                 )
-                this.data.tasklists = data.items || []
+                newTasklists = data.items || []
 
-                const hasValidTasklist = this.data.tasklists.some(
+                const hasValidTasklist = newTasklists.some(
                     (tl) => tl.id === this.defaultTasklistId
                 )
                 if (!this.defaultTasklistId || !hasValidTasklist) {
                     this.defaultTasklistId =
-                        this.data.tasklists[0]?.id ?? '@default'
-                    localStorage.setItem(
-                        this.tasklistIdKey,
-                        this.defaultTasklistId
-                    )
+                        newTasklists[0]?.id ?? '@default'
+                    try {
+                        localStorage.setItem(
+                            this.tasklistIdKey,
+                            this.defaultTasklistId
+                        )
+                    } catch (error) {
+                        console.error('failed to save default tasklist ID:', error)
+                    }
                 }
             }
 
@@ -224,7 +231,7 @@ class GoogleTasksBackendExtension extends TaskBackend {
                     Date.now() - 24 * 60 * 60 * 1000
                 ).toISOString()
 
-                const taskPromises = this.data.tasklists.map(
+                const taskPromises = newTasklists.map(
                     async (tasklist) => {
                         const data = await this.apiRequest(
                             `/lists/${tasklist.id}/tasks?showCompleted=true&showHidden=true&showAssigned=true&maxResults=100`
@@ -239,13 +246,13 @@ class GoogleTasksBackendExtension extends TaskBackend {
                 )
 
                 const taskArrays = await Promise.all(taskPromises)
-                this.data.tasks = taskArrays.flat()
+                newTasks = taskArrays.flat()
 
                 // Filter out old completed tasks (keep last 24 hours)
                 const completedThreshold = new Date(
                     Date.now() - 24 * 60 * 60 * 1000
                 )
-                this.data.tasks = this.data.tasks.filter((task) => {
+                newTasks = newTasks.filter((task) => {
                     // Keep all uncompleted tasks
                     if (task.status !== 'completed') return true
                     // Keep recently completed tasks
@@ -258,7 +265,19 @@ class GoogleTasksBackendExtension extends TaskBackend {
                 })
             }
 
-            localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+            // Only update this.data after all operations succeed
+            this.data.tasklists = newTasklists
+            this.data.tasks = newTasks
+
+            try {
+                localStorage.setItem(this.dataKey, JSON.stringify(this.data))
+            } catch (error) {
+                console.error('failed to save google tasks data to localStorage:', error)
+                if (error.name === 'QuotaExceededError') {
+                    throw new Error('localStorage quota exceeded - please clear some data')
+                }
+                throw error
+            }
 
             return this.data
         } catch (error) {

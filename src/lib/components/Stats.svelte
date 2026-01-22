@@ -12,6 +12,7 @@
     let frameCount = 0
     let lastTime = 0
     let fpsAnimationId = null
+    let perfObserver = null
 
     function updateFPS() {
         frameCount++
@@ -76,9 +77,12 @@
         updateViewportSize()
         startFPS()
 
-        const perfObserver = new PerformanceObserver((list) => {
-            const entry = list.getEntries()[0].toJSON()
-            loadTime = Math.round(entry.duration)
+        perfObserver = new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            if (entries.length > 0) {
+                const entry = entries[0].toJSON()
+                loadTime = Math.round(entry.duration)
+            }
         })
         perfObserver.observe({ type: 'navigation', buffered: true })
 
@@ -88,6 +92,9 @@
 
     onDestroy(() => {
         stopFPS()
+        if (perfObserver) {
+            perfObserver.disconnect()
+        }
         window.removeEventListener('resize', updateViewportSize)
         document.removeEventListener('visibilitychange', handleVisibilityChange)
     })

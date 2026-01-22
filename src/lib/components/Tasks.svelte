@@ -21,6 +21,7 @@
     let error = $state('')
     let initialLoad = $state(true)
     let previousToken = $state(null)
+    let previousBackend = $state(null)
     let taskCount = $derived(tasks.filter((task) => !task.checked).length)
     let taskLabel = $derived(taskCount === 1 ? 'task' : 'tasks')
     let backendUrl = $derived.by(() => {
@@ -127,19 +128,27 @@
         if (untrack(() => initialLoad)) {
             initialLoad = false
             previousToken = token
+            previousBackend = backend
             return
         }
 
-        // Only clear Todoist data if the token changed (not the backend)
+        // Clear local data if:
+        // 1. Todoist token changed
+        // 2. Backend changed (switching between local/todoist/google-tasks)
         const tokenChanged = backend === 'todoist' && previousToken !== token
+        const backendChanged = previousBackend !== backend
+        const clearLocalData = tokenChanged || backendChanged
+
         previousToken = token
-        initializeAPI(backend, token, tokenChanged)
+        previousBackend = backend
+        initializeAPI(backend, token, clearLocalData)
     })
 
     function resetState(errorMessage) {
         api = null
         tasks = []
         availableProjects = []
+        editBuffer = {}
         syncing = false
         error = errorMessage
     }
@@ -168,6 +177,7 @@
                 api.clearLocalData()
                 tasks = []
                 availableProjects = []
+                editBuffer = {}
             }
             await loadTasks(true)
         } catch (err) {
@@ -276,6 +286,7 @@
         // Prevent concurrent toggles of the same task
         if (togglingTasks.has(taskId)) return
 
+        const previousTasks = [...tasks]
         try {
             togglingTasks.add(taskId)
 
@@ -299,6 +310,8 @@
             await loadTasks()
         } catch (err) {
             console.error('task toggle failed:', err)
+            // Revert optimistic update before refreshing
+            tasks = previousTasks
             await loadTasks()
         } finally {
             togglingTasks.delete(taskId)
