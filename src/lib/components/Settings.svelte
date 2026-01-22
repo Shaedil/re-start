@@ -1,4 +1,5 @@
 <script>
+    import { onDestroy } from 'svelte'
     import { fade, fly } from 'svelte/transition'
     import {
         saveSettings,
@@ -87,6 +88,41 @@
         }
     }
 
+    function handleExport() {
+        const dataStr = JSON.stringify(settings, null, 2)
+        const blob = new Blob([dataStr], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 're-start-settings.json'
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
+    let fileInput = $state(null)
+
+    function handleImport() {
+        fileInput?.click()
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result)
+                Object.assign(settings, imported)
+                saveSettings(settings)
+            } catch (err) {
+                alert('failed to import settings: invalid json file')
+            }
+        }
+        reader.readAsText(file)
+        event.target.value = ''
+    }
+
     // Drag and drop state
     let draggedIndex = $state(null)
     let dropSlotIndex = $state(null) // Which slot (between items) to drop into
@@ -147,11 +183,16 @@
 
     let locationLoading = $state(false)
     let locationError = $state(null)
+    let locationErrorTimeout = null
 
     async function useCurrentLocation() {
         if (!navigator.geolocation) {
             locationError = 'geolocation not supported by browser'
-            setTimeout(() => (locationError = null), 3000)
+            if (locationErrorTimeout) clearTimeout(locationErrorTimeout)
+            locationErrorTimeout = setTimeout(
+                () => (locationError = null),
+                3000
+            )
             return
         }
 
@@ -181,7 +222,11 @@
                     default:
                         locationError = 'failed to get location'
                 }
-                setTimeout(() => (locationError = null), 3000)
+                if (locationErrorTimeout) clearTimeout(locationErrorTimeout)
+                locationErrorTimeout = setTimeout(
+                    () => (locationError = null),
+                    3000
+                )
             },
             {
                 enableHighAccuracy: false,
@@ -190,6 +235,12 @@
             }
         )
     }
+
+    onDestroy(() => {
+        if (locationErrorTimeout) {
+            clearTimeout(locationErrorTimeout)
+        }
+    })
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -397,11 +448,13 @@
                         onclick={useCurrentLocation}
                         disabled={locationLoading}
                     >
-                        [{locationError
-                            ? locationError
-                            : locationLoading
-                              ? 'getting location...'
-                              : 'use current location'}]
+                        <span class="bracket">[</span><span class="action-text"
+                            >{locationError
+                                ? locationError
+                                : locationLoading
+                                  ? 'getting location...'
+                                  : 'use current location'}</span
+                        ><span class="bracket">]</span>
                     </button>
                 </div>
             {/if}
@@ -552,17 +605,45 @@
                     rows="6"
                 ></textarea>
             </div>
+            <div class="group">
+                <div class="setting-label">manage settings</div>
+                <div class="settings-actions">
+                    <button onclick={handleImport}
+                        ><span class="bracket">[</span><span class="action-text"
+                            >import json</span
+                        ><span class="bracket">]</span></button
+                    >
+                    <button onclick={handleExport}
+                        ><span class="bracket">[</span><span class="action-text"
+                            >export json</span
+                        ><span class="bracket">]</span></button
+                    >
+                    <button onclick={handleReset}
+                        ><span class="bracket">[</span><span class="action-text"
+                            >reset settings</span
+                        ><span class="bracket">]</span></button
+                    >
+                </div>
+            </div>
+            <input
+                type="file"
+                accept=".json"
+                bind:this={fileInput}
+                onchange={handleFileSelect}
+                style="display: none;"
+            />
             <div class="version">
-                re-start
-                <a href="https://github.com/refact0r/re-start" target="_blank">
-                    {#if version}v{version}
-                    {/if}</a
+                re-start{#if version}&nbsp;v{version}{/if} •
+                <a href="https://github.com/refact0r/re-start" target="_blank"
+                    ><span class="bracket">[</span><span class="action-text"
+                        >github</span
+                    ><span class="bracket">]</span></a
                 >
                 • made with ❤️ by
-                <a href="https://refact0r.dev" target="_blank">refact0r</a>
-                •
-                <button class="reset-link" onclick={handleReset}
-                    >reset settings</button
+                <a href="https://refact0r.dev" target="_blank"
+                    ><span class="bracket">[</span><span class="action-text"
+                        >refact0r</span
+                    ><span class="bracket">]</span></a
                 >
             </div>
         </div>
@@ -709,6 +790,21 @@
         font-size: 1.125rem;
         font-weight: 300;
     }
+    .settings-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .bracket {
+        color: var(--txt-3);
+    }
+    .action-text {
+        color: var(--txt-2);
+    }
+    button:hover .bracket,
+    a:hover .bracket {
+        color: var(--txt-2);
+    }
     .version {
         color: var(--txt-3);
 
@@ -742,17 +838,5 @@
     .checkbox-group {
         display: flex;
         gap: 3ch;
-    }
-    .reset-link {
-        background: none;
-        border: none;
-        color: var(--txt-2);
-        cursor: pointer;
-        padding: 0;
-        font-size: inherit;
-        font-family: inherit;
-    }
-    .reset-link:hover {
-        color: var(--txt-1);
     }
 </style>
