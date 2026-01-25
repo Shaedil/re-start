@@ -13,11 +13,25 @@ class GoogleTasksBackendExtension extends TaskBackend {
 
         this.dataKey = 'google_tasks_data'
         this.tasklistIdKey = 'google_tasks_default_list'
+        this.quotaUserKey = 'google_tasks_quota_user'
         this.data = JSON.parse(localStorage.getItem(this.dataKey) ?? '{}')
         this.defaultTasklistId =
             localStorage.getItem(this.tasklistIdKey) ?? '@default'
+        this.quotaUser = this._getOrCreateQuotaUser()
         this.accessToken = null
         this.tokenPromise = null // Prevent multiple simultaneous token requests
+    }
+
+    /**
+     * Get or create a unique user ID for quota tracking
+     */
+    _getOrCreateQuotaUser() {
+        let quotaUser = localStorage.getItem(this.quotaUserKey)
+        if (!quotaUser) {
+            quotaUser = crypto.randomUUID()
+            localStorage.setItem(this.quotaUserKey, quotaUser)
+        }
+        return quotaUser
     }
 
     /**
@@ -115,7 +129,9 @@ class GoogleTasksBackendExtension extends TaskBackend {
         // Get a fresh token (Chrome caches it and auto-refreshes as needed)
         let token = await this.getAuthToken(false)
 
-        const url = `${this.baseUrl}${endpoint}`
+        // Add quotaUser parameter for per-user quota tracking
+        const separator = endpoint.includes('?') ? '&' : '?'
+        const url = `${this.baseUrl}${endpoint}${separator}quotaUser=${this.quotaUser}`
         const response = await fetch(url, {
             ...options,
             headers: {

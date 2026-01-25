@@ -11,7 +11,7 @@
     },
     "permissions": ["identity"],
     "oauth2": {
-        "client_id": "489393578728-r6p53q4oe7ngcm6r4kmtgbk17s2cgpk8.apps.googleusercontent.com",
+        "client_id": "",
         "scopes": ["https://www.googleapis.com/auth/tasks"]
     },
     "browser_specific_settings": {

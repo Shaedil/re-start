@@ -10,6 +10,13 @@
     --txt-3: oklch(50% 0 0);
     --txt-4: oklch(40% 0 0);
     --txt-err: oklch(70% 0.11 0);
+    /* Default accent colors (monochrome) */
+    --txt-num: oklch(90% 0 0);
+    --txt-link: oklch(75% 0 0);
+    --txt-green: oklch(75% 0 0);
+    --txt-violet: oklch(50% 0 0);
+    --txt-orange: oklch(90% 0 0);
+    --txt-magenta: oklch(50% 0 0);
 }
 
 .theme-rose-pine {
@@ -21,6 +28,13 @@
     --txt-3: #31748f;
     --txt-4: #ebbcba;
     --txt-err: #eb6f92;
+    /* Rose Pine accent colors */
+    --txt-num: #f6c177;
+    --txt-link: #9ccfd8;
+    --txt-green: #31748f;
+    --txt-violet: #c4a7e7;
+    --txt-orange: #f6c177;
+    --txt-magenta: #ebbcba;
 }
 
 .theme-catppuccin-mocha {
@@ -32,6 +46,13 @@
     --txt-3: #6c7086;
     --txt-4: #cba6f7;
     --txt-err: #f38ba8;
+    /* Catppuccin Mocha accent colors */
+    --txt-num: #f9e2af;
+    --txt-link: #89b4fa;
+    --txt-green: #a6e3a1;
+    --txt-violet: #cba6f7;
+    --txt-orange: #fab387;
+    --txt-magenta: #f5c2e7;
 }
 
 .theme-catppuccin-latte {
@@ -43,6 +64,13 @@
     --txt-3: #8c8fa1;
     --txt-4: #7287fd;
     --txt-err: #d20f39;
+    /* Catppuccin Latte accent colors */
+    --txt-num: #df8e1d;
+    --txt-link: #1e66f5;
+    --txt-green: #40a02b;
+    --txt-violet: #8839ef;
+    --txt-orange: #fe640b;
+    --txt-magenta: #ea76cb;
 }
 
 .theme-nord {
@@ -54,6 +82,13 @@
     --txt-3: hsl(219, 23%, 65%);
     --txt-4: #88c0d0;
     --txt-err: #bf616a;
+    /* Nord accent colors */
+    --txt-num: #ebcb8b;
+    --txt-link: #81a1c1;
+    --txt-green: #a3be8c;
+    --txt-violet: #b48ead;
+    --txt-orange: #d08770;
+    --txt-magenta: #b48ead;
 }
 
 .theme-tokyo-night {
@@ -65,6 +100,13 @@
     --txt-3: #565f89;
     --txt-4: #7aa2f7;
     --txt-err: #f7768e;
+    /* Tokyo Night accent colors */
+    --txt-num: #e0af68;
+    --txt-link: #7aa2f7;
+    --txt-green: #9ece6a;
+    --txt-violet: #bb9af7;
+    --txt-orange: #ff9e64;
+    --txt-magenta: #f7768e;
 }
 
 .theme-gruvbox {
@@ -76,6 +118,13 @@
     --txt-3: #928374;
     --txt-4: #fabd2f;
     --txt-err: #fb4934;
+    /* Gruvbox accent colors */
+    --txt-num: #fabd2f;
+    --txt-link: #83a598;
+    --txt-green: #b8bb26;
+    --txt-violet: #d3869b;
+    --txt-orange: #fe8019;
+    --txt-magenta: #d3869b;
 }
 
 .theme-everforest {
@@ -87,6 +136,13 @@
     --txt-3: #7a8478;
     --txt-4: #a7c080;
     --txt-err: #e67e80;
+    /* Everforest accent colors */
+    --txt-num: #dbbc7f;
+    --txt-link: #7fbbb3;
+    --txt-green: #a7c080;
+    --txt-violet: #d699b6;
+    --txt-orange: #e69875;
+    --txt-magenta: #d699b6;
 }
 
 .theme-kanagawa {
@@ -98,6 +154,13 @@
     --txt-3: #727169;
     --txt-4: #957FB8;
     --txt-err: #E46876;
+    /* Kanagawa accent colors */
+    --txt-num: #E6C384;
+    --txt-link: #7E9CD8;
+    --txt-green: #98BB6C;
+    --txt-violet: #957FB8;
+    --txt-orange: #FFA066;
+    --txt-magenta: #D27E99;
 }
 
 .theme-solarized-dark {

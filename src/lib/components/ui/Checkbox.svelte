@@ -18,8 +18,11 @@
 
 <style>
     label {
-        display: block;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
         cursor: pointer;
+        white-space: nowrap;
     }
 
     label input[type='checkbox'] {
