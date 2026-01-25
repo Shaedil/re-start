@@ -242,7 +242,7 @@ class WeatherAPI {
             })
         }
 
-        return forecasts.reverse()
+        return forecasts
     }
 
     /**
