@@ -1,7 +1,8 @@
 {
     "name": "re-start",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "manifest_version": 3,
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlq0/MaN5su+MvBzyFErLIbVrIcjgbhzASylqPtsBp3oEAL5JuynrvtR2cp5MudXUGKiARjvXbzATLR1MFGAhKXfI3WoAgMu7sYJeUv3/f7jTKuBuvvhB6dGK7w2JCnUQzPPAQq48iBsHMrgcNJ+k19QSEfVuOawJ957rUGHU5sZ3Dd9daYBU9D/Allvb/oPTKTIfWictSJ+kcl1N8X+8DHpWKjIccNy6+uB4KMfCWb7Ix0ol6FZ6Q6JniimIo5dZtlpUyWZO80dY3/Rm7u136JuptDqa6SEz4o4UIriNOYwVmTltdxv7I1tCLcjnhLVpvBAz9G1GWjb69fvTI/3m0QIDAQAB",
     "description": "a tui-style startpage/new tab page.",
     "icons": {
         "16": "icon-16.png",

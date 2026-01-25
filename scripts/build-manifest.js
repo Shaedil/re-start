@@ -32,6 +32,8 @@ if (browser === 'chrome') {
 } else if (browser === 'firefox') {
     // Remove Chrome-specific oauth2 configuration
     delete manifest.oauth2
+    // Remove Chrome-specific key
+    delete manifest.key
     // Remove identity permission - Firefox doesn't support chrome.identity.getAuthToken
     if (manifest.permissions) {
         manifest.permissions = manifest.permissions.filter(p => p !== 'identity')
