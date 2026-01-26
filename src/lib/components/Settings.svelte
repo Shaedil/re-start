@@ -29,6 +29,8 @@
     let calendarSigningIn = $state(false)
     let calendarSignInError = $state('')
     let calendarCredentialsInput = $state(null)
+    let availableCalendars = $state([])
+    let loadingCalendars = $state(false)
 
     async function handleCalendarCredentialsUpload(event) {
         const file = event.target.files?.[0]
@@ -75,6 +77,9 @@
             const tokens = await backend.signIn()
             settings.googleCalendarRefreshToken = tokens.refreshToken
             saveSettings(settings)
+            
+            // Load available calendars after sign-in
+            await loadCalendarList()
         } catch (err) {
             console.error('Google Calendar sign in failed:', err)
             calendarSignInError = err.message || 'sign in failed'
@@ -82,6 +87,50 @@
             calendarSigningIn = false
         }
     }
+
+    async function loadCalendarList() {
+        if (!settings.googleCalendarRefreshToken) return
+
+        try {
+            loadingCalendars = true
+            const backend = new GoogleCalendarBackend(
+                settings.googleCalendarClientId,
+                settings.googleCalendarClientSecret
+            )
+            const { accessToken } = await backend.refreshAccessToken(settings.googleCalendarRefreshToken)
+            availableCalendars = await backend.getCalendarList(accessToken)
+
+            // If no calendars selected yet, default to primary
+            if (settings.googleCalendarSelectedCalendars.length === 0) {
+                const primaryCal = availableCalendars.find(c => c.primary)
+                if (primaryCal) {
+                    settings.googleCalendarSelectedCalendars = [primaryCal.id]
+                    saveSettings(settings)
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load calendar list:', err)
+        } finally {
+            loadingCalendars = false
+        }
+    }
+
+    function toggleCalendarSelection(calendarId) {
+        const selected = settings.googleCalendarSelectedCalendars
+        if (selected.includes(calendarId)) {
+            settings.googleCalendarSelectedCalendars = selected.filter(id => id !== calendarId)
+        } else {
+            settings.googleCalendarSelectedCalendars = [...selected, calendarId]
+        }
+        saveSettings(settings)
+    }
+
+    // Load calendar list when settings panel opens and user is signed in
+    $effect(() => {
+        if (showSettings && settings.googleCalendarRefreshToken && availableCalendars.length === 0) {
+            loadCalendarList()
+        }
+    })
 
     function handleCalendarSignOut() {
         settings.googleCalendarRefreshToken = ''
@@ -545,6 +594,34 @@
                             >
                                 <span class="bracket">[</span><span class="action-text">clear credentials</span><span class="bracket">]</span>
                             </button>
+                        </div>
+                        
+                        <div class="calendar-selection">
+                            <div class="setting-label" style="margin-top: 1rem;">calendars to display</div>
+                            {#if loadingCalendars}
+                                <div class="loading">loading calendars...</div>
+                            {:else if availableCalendars.length > 0}
+                                <div class="calendar-list">
+                                    {#each availableCalendars as cal}
+                                        <label class="calendar-item">
+                                            <input
+                                                type="checkbox"
+                                                checked={settings.googleCalendarSelectedCalendars.includes(cal.id)}
+                                                onchange={() => toggleCalendarSelection(cal.id)}
+                                            />
+                                            <span class="calendar-color" style="background-color: {cal.backgroundColor}"></span>
+                                            <span class="calendar-name">{cal.name}</span>
+                                            {#if cal.primary}
+                                                <span class="primary-badge">primary</span>
+                                            {/if}
+                                        </label>
+                                    {/each}
+                                </div>
+                            {:else}
+                                <button class="button" onclick={loadCalendarList}>
+                                    <span class="bracket">[</span><span class="action-text">load calendars</span><span class="bracket">]</span>
+                                </button>
+                            {/if}
                         </div>
                     {/if}
                 </div>
@@ -1031,5 +1108,36 @@
         word-break: break-all;
         display: block;
         user-select: all;
+    }
+    .calendar-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .calendar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+    .calendar-item input[type="checkbox"] {
+        cursor: pointer;
+    }
+    .calendar-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+    .calendar-name {
+        color: var(--txt-2);
+    }
+    .primary-badge {
+        font-size: 0.75rem;
+        color: var(--txt-3);
+        margin-left: 0.25rem;
+    }
+    .loading {
+        color: var(--txt-3);
     }
 </style>

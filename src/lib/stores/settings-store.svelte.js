@@ -29,6 +29,7 @@ let defaultSettings = {
     googleCalendarClientId: '',
     googleCalendarClientSecret: '',
     googleCalendarRefreshToken: '',
+    googleCalendarSelectedCalendars: [],  // Array of calendar IDs to show
     // Pomodoro settings
     pomodoroWorkMinutes: 25,
     pomodoroShortBreak: 5,

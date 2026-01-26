@@ -32,8 +32,13 @@
                 settings.googleCalendarRefreshToken
             )
 
-            // Fetch today's events
-            events = await backend.getTodayEvents(accessToken)
+            // Determine which calendars to fetch
+            const calendarIds = settings.googleCalendarSelectedCalendars.length > 0
+                ? settings.googleCalendarSelectedCalendars
+                : ['primary']
+
+            // Fetch today's events from selected calendars
+            events = await backend.getTodayEvents(accessToken, calendarIds)
         } catch (err) {
             console.error('Failed to load calendar events:', err)
             if (err.message === 'ACCESS_TOKEN_EXPIRED' || err.message.includes('Token refresh failed')) {

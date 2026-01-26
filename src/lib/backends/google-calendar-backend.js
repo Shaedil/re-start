@@ -174,9 +174,42 @@ class GoogleCalendarBackend {
     }
 
     /**
-     * Fetch today's calendar events
+     * Fetch list of calendars the user has access to
      */
-    async getTodayEvents(accessToken) {
+    async getCalendarList(accessToken) {
+        const response = await fetch(
+            `${this.calendarEndpoint}/users/me/calendarList`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        )
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('ACCESS_TOKEN_EXPIRED')
+            }
+            throw new Error(`Failed to fetch calendar list: ${response.status}`)
+        }
+
+        const data = await response.json()
+        
+        // Map to a simpler structure
+        return (data.items || []).map(cal => ({
+            id: cal.id,
+            name: cal.summary || cal.id,
+            primary: cal.primary || false,
+            backgroundColor: cal.backgroundColor || '#4285f4',
+        }))
+    }
+
+    /**
+     * Fetch today's calendar events from specified calendars
+     * @param {string} accessToken 
+     * @param {string[]} calendarIds - Array of calendar IDs to fetch from (defaults to ['primary'])
+     */
+    async getTodayEvents(accessToken, calendarIds = ['primary']) {
         // Get start and end of today in local timezone
         const now = new Date()
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -189,34 +222,52 @@ class GoogleCalendarBackend {
             orderBy: 'startTime',
         })
 
-        const response = await fetch(
-            `${this.calendarEndpoint}/calendars/primary/events?${params.toString()}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
-        )
+        // Fetch events from all calendars in parallel
+        const eventPromises = calendarIds.map(async (calendarId) => {
+            const response = await fetch(
+                `${this.calendarEndpoint}/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            )
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('ACCESS_TOKEN_EXPIRED')
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('ACCESS_TOKEN_EXPIRED')
+                }
+                // Skip calendars that fail (might be permission issues)
+                console.warn(`Failed to fetch events from calendar ${calendarId}: ${response.status}`)
+                return []
             }
-            throw new Error(`Failed to fetch events: ${response.status}`)
-        }
 
-        const data = await response.json()
-        
-        // Map to our event structure
-        return (data.items || []).map(event => ({
-            id: event.id,
-            title: event.summary || '(no title)',
-            start: event.start.dateTime || event.start.date,
-            end: event.end.dateTime || event.end.date,
-            allDay: !event.start.dateTime,
-            description: event.description || '',
-            location: event.location || '',
-        }))
+            const data = await response.json()
+            
+            // Map to our event structure
+            return (data.items || []).map(event => ({
+                id: event.id,
+                title: event.summary || '(no title)',
+                start: event.start.dateTime || event.start.date,
+                end: event.end.dateTime || event.end.date,
+                allDay: !event.start.dateTime,
+                description: event.description || '',
+                location: event.location || '',
+                calendarId: calendarId,
+            }))
+        })
+
+        const eventArrays = await Promise.all(eventPromises)
+        const allEvents = eventArrays.flat()
+
+        // Sort by start time (all-day events first, then by time)
+        return allEvents.sort((a, b) => {
+            // All-day events come first
+            if (a.allDay && !b.allDay) return -1
+            if (!a.allDay && b.allDay) return 1
+            // Then sort by start time
+            return new Date(a.start) - new Date(b.start)
+        })
     }
 }
 
