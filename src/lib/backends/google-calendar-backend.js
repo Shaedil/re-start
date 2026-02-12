@@ -15,7 +15,7 @@ class GoogleCalendarBackend {
      * Get the redirect URI for OAuth
      * Uses Chrome's extension redirect URL when available
      */
-    getRedirectUri() {
+    static getRedirectUrl() {
         if (typeof chrome !== 'undefined' && chrome.identity?.getRedirectURL) {
             return chrome.identity.getRedirectURL()
         }
@@ -23,13 +23,10 @@ class GoogleCalendarBackend {
     }
 
     /**
-     * Static method to get redirect URI without instantiating
+     * Instance convenience method — delegates to static getRedirectUrl()
      */
-    static getRedirectUrl() {
-        if (typeof chrome !== 'undefined' && chrome.identity?.getRedirectURL) {
-            return chrome.identity.getRedirectURL()
-        }
-        return 'http://localhost'
+    getRedirectUri() {
+        return GoogleCalendarBackend.getRedirectUrl()
     }
 
     /**
@@ -190,7 +187,9 @@ class GoogleCalendarBackend {
             if (response.status === 401) {
                 throw new Error('ACCESS_TOKEN_EXPIRED')
             }
-            throw new Error(`Failed to fetch calendar list: ${response.status}`)
+            const errBody = await response.json().catch(() => ({}))
+            console.error('Calendar list API error:', errBody)
+            throw new Error(`Failed to fetch calendar list: ${response.status} - ${errBody?.error?.message || 'unknown'}`)
         }
 
         const data = await response.json()
@@ -206,10 +205,11 @@ class GoogleCalendarBackend {
 
     /**
      * Fetch today's calendar events from specified calendars
-     * @param {string} accessToken 
+     * @param {string} accessToken
      * @param {string[]} calendarIds - Array of calendar IDs to fetch from (defaults to ['primary'])
+     * @param {Object.<string, string>} calendarColors - Map of calendarId to hex color string (e.g. { 'primary': '#4285f4' })
      */
-    async getTodayEvents(accessToken, calendarIds = ['primary']) {
+    async getTodayEvents(accessToken, calendarIds = ['primary'], calendarColors = {}) {
         // Get start and end of today in local timezone
         const now = new Date()
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -238,7 +238,8 @@ class GoogleCalendarBackend {
                     throw new Error('ACCESS_TOKEN_EXPIRED')
                 }
                 // Skip calendars that fail (might be permission issues)
-                console.warn(`Failed to fetch events from calendar ${calendarId}: ${response.status}`)
+                const errBody = await response.json().catch(() => ({}))
+                console.warn(`Failed to fetch events from calendar ${calendarId}: ${response.status}`, errBody)
                 return []
             }
 
@@ -254,6 +255,7 @@ class GoogleCalendarBackend {
                 description: event.description || '',
                 location: event.location || '',
                 calendarId: calendarId,
+                calendarColor: calendarColors[calendarId] || '#4285f4',
             }))
         })
 

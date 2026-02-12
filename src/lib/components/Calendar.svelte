@@ -2,18 +2,33 @@
     import { onMount } from 'svelte'
     import { settings } from '../stores/settings-store.svelte.js'
     import GoogleCalendarBackend from '../backends/google-calendar-backend.js'
+    import { getEventDurationMinutes, getTimelineBounds, getMinuteOfDay, layoutEvents, PX_PER_HOUR } from '../utils/calendar-helpers.js'
 
     let { class: className = '' } = $props()
 
     let events = $state([])
     let loading = $state(false)
     let error = $state(null)
+    let calendarColorCache = $state({})
 
     // Check if we have credentials and are signed in
     let hasCredentials = $derived(
         settings.googleCalendarClientId && settings.googleCalendarClientSecret
     )
     let isSignedIn = $derived(hasCredentials && settings.googleCalendarRefreshToken)
+
+    // Timeline derived state
+    let timedEvents = $derived(events.filter(e => !e.allDay))
+    let allDayEvents = $derived(events.filter(e => e.allDay))
+    let bounds = $derived(getTimelineBounds(timedEvents))
+    let positioned = $derived(layoutEvents(timedEvents))
+    let timelineHeight = $derived((bounds.endHour - bounds.startHour) * PX_PER_HOUR)
+
+    function formatTimeRange(event) {
+        const start = formatTime(event.start, false, { short: true })
+        const end = formatTime(event.end, false, { short: true })
+        return `${start}\u2013${end}`
+    }
 
     async function loadEvents() {
         if (!isSignedIn) return
@@ -37,8 +52,16 @@
                 ? settings.googleCalendarSelectedCalendars
                 : ['primary']
 
-            // Fetch today's events from selected calendars
-            events = await backend.getTodayEvents(accessToken, calendarIds)
+            // Only fetch calendar list if cache is empty
+            if (Object.keys(calendarColorCache).length === 0) {
+                const calendars = await backend.getCalendarList(accessToken)
+                calendarColorCache = Object.fromEntries(
+                    calendars.map(c => [c.id, c.backgroundColor])
+                )
+            }
+
+            // Fetch today's events from selected calendars, with color info
+            events = await backend.getTodayEvents(accessToken, calendarIds, calendarColorCache)
         } catch (err) {
             console.error('Failed to load calendar events:', err)
             if (err.message === 'ACCESS_TOKEN_EXPIRED' || err.message.includes('Token refresh failed')) {
@@ -53,17 +76,17 @@
         }
     }
 
-    function formatTime(dateString, allDay) {
+    function formatTime(dateString, allDay, { short = false } = {}) {
         if (allDay) return 'all day'
-        
+
         const date = new Date(dateString)
         const hours = date.getHours()
         const minutes = date.getMinutes()
-        
+
         if (settings.timeFormat === '24hr') {
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
         } else {
-            const period = hours >= 12 ? 'pm' : 'am'
+            const period = short ? '' : (hours >= 12 ? 'PM' : 'AM')
             const hour12 = hours % 12 || 12
             if (minutes === 0) {
                 return `${hour12}${period}`
@@ -128,15 +151,40 @@
         {:else if events.length === 0}
             <div class="message">no events today</div>
         {:else}
-            <div class="events">
-                {#each events as event}
-                    <div 
-                        class="event" 
+            <!-- All-day events at top if any -->
+            {#if allDayEvents.length > 0}
+                <div class="all-day-events">
+                    {#each allDayEvents as event}
+                        <div class="all-day-event" style="color: {event.calendarColor};">
+                            <span class="bar" style="background-color: {event.calendarColor};"></span>
+                            <span class="title">{event.title}</span>
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- Timeline -->
+            <div class="timeline" style="height: {timelineHeight}px;">
+                <!-- Hour markers -->
+                {#each Array.from({length: bounds.endHour - bounds.startHour + 1}, (_, i) => bounds.startHour + i) as hour}
+                    <div class="hour-marker" style="top: {(hour - bounds.startHour) * PX_PER_HOUR}px;">
+                        <span class="hour-label">{hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}</span>
+                    </div>
+                {/each}
+
+                <!-- Event cards -->
+                {#each positioned as { event, column, totalColumns }}
+                    {@const top = ((getMinuteOfDay(event.start) - bounds.startHour * 60) / 60) * PX_PER_HOUR}
+                    {@const height = Math.max(24, (getEventDurationMinutes(event) / 60) * PX_PER_HOUR)}
+                    {@const colFraction = column / totalColumns}
+                    {@const widthFraction = 1 / totalColumns}
+                    <div
+                        class="event-card"
                         class:past={isEventPast(event)}
-                        class:now={isEventNow(event)}
+                        style="top: {top}px; height: {height}px; left: calc(1.5rem + (100% - 1.5rem) * {colFraction}); width: calc((100% - 1.5rem) * {widthFraction}); background-color: color-mix(in srgb, {event.calendarColor} 25%, transparent); border-color: color-mix(in srgb, {event.calendarColor} 40%, transparent);"
                     >
-                        <span class="time">{formatTime(event.start, event.allDay)}</span>
-                        <span class="title">{event.title}</span>
+                        <span class="event-title" style="color: {event.calendarColor};">{event.title}</span>
+                        <span class="event-time" style="color: {event.calendarColor};">{formatTimeRange(event)}</span>
                     </div>
                 {/each}
             </div>
@@ -146,10 +194,8 @@
 
 <style>
     .panel-wrapper {
-        flex-shrink: 0;
-    }
-    .panel-wrapper.expand {
-        flex-grow: 1;
+        flex: 1;
+        max-width: 40rem;
     }
     .message {
         color: var(--txt-3);
@@ -161,27 +207,63 @@
     .sign-in-link:hover {
         color: var(--txt-1);
     }
-    .events {
+    .all-day-events {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+        margin-bottom: 0.5rem;
     }
-    .event {
+    .all-day-event {
         display: flex;
-        gap: 1rem;
+        align-items: center;
+        gap: 0.5rem;
     }
-    .event.past {
+    .all-day-event .bar {
+        width: 3px;
+        height: 1em;
+        flex-shrink: 0;
+        border-radius: 1.5px;
+    }
+    .all-day-event .title {
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .timeline {
+        position: relative;
+        margin-left: 0;
+    }
+    .hour-marker {
+        position: absolute;
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+    }
+    .hour-label {
+        color: var(--txt-3);
+        min-width: 1.25rem;
+        text-align: right;
+        font-size: 0.85em;
+    }
+    .event-card {
+        position: absolute;
+        z-index: 1;
+        border: 1px solid;
+        border-radius: 4px;
+        padding: 2px 4px;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+    .event-card.past {
         opacity: 0.5;
     }
-    .event.now .title {
-        color: var(--txt-1);
+    .event-title {
+        font-weight: bold;
+        display: block;
     }
-    .time {
-        color: var(--txt-3);
-        min-width: 5rem;
-        text-align: right;
-    }
-    .title {
-        color: var(--txt-2);
+    .event-time {
+        font-size: 0.7em;
+        display: block;
     }
 </style>
