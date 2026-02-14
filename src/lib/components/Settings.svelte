@@ -628,6 +628,23 @@
             {/if}
 
             <div class="group">
+                <div class="setting-label">privacy</div>
+                <div class="radio-group">
+                    <RadioButton
+                        bind:group={settings.blurWidgets}
+                        value={true}
+                    >
+                        blur
+                    </RadioButton>
+                    <RadioButton
+                        bind:group={settings.blurWidgets}
+                        value={false}
+                    >
+                        no blur
+                    </RadioButton>
+                </div>
+            </div>
+            <div class="group">
                 <div class="setting-label">weather forecast</div>
                 <div class="radio-group">
                     <RadioButton

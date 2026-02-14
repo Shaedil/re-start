@@ -478,7 +478,7 @@
                                 <span class="task-title">
                                     <input
                                         class="task-title-input"
-                                        class:hidden={!isRevealed}
+                                        class:hidden={!isRevealed && settings.blurWidgets}
                                         aria-label="edit task name"
                                         bind:value={editBuffer[task.id]}
                                         onblur={() => commitEdit(task.id)}
@@ -488,9 +488,9 @@
                                                 e.target.blur()
                                             }
                                         }}
-                                        tabindex={isRevealed ? 0 : -1}
+                                        tabindex={isRevealed || !settings.blurWidgets ? 0 : -1}
                                     />
-                                    {#if !isRevealed}
+                                    {#if !isRevealed && settings.blurWidgets}
                                         <span class="task-title-masked">•••</span>
                                     {/if}
                                 </span>

@@ -204,16 +204,17 @@ class GoogleCalendarBackend {
     }
 
     /**
-     * Fetch today's calendar events from specified calendars
+     * Fetch upcoming calendar events from specified calendars
      * @param {string} accessToken
      * @param {string[]} calendarIds - Array of calendar IDs to fetch from (defaults to ['primary'])
      * @param {Object.<string, string>} calendarColors - Map of calendarId to hex color string (e.g. { 'primary': '#4285f4' })
+     * @param {number} days - Number of days ahead to fetch (default 1 = today only)
      */
-    async getTodayEvents(accessToken, calendarIds = ['primary'], calendarColors = {}) {
-        // Get start and end of today in local timezone
+    async getTodayEvents(accessToken, calendarIds = ['primary'], calendarColors = {}, days = 1) {
+        // Get start of today and end of range in local timezone
         const now = new Date()
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days)
 
         const params = new URLSearchParams({
             timeMin: startOfDay.toISOString(),

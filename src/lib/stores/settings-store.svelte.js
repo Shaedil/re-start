@@ -25,6 +25,7 @@ let defaultSettings = {
     showNotes: false,
     showQuote: false,
     showCalendar: false,
+    blurWidgets: true,
     // Google Calendar credentials (user-provided)
     googleCalendarClientId: '',
     googleCalendarClientSecret: '',

@@ -52,8 +52,10 @@
                 onblur={handleBlur}
                 placeholder="jot something down..."
             ></textarea>
-        {:else}
+        {:else if settings.blurWidgets}
             <div class="notes-masked">•••</div>
+        {:else}
+            <div class="notes-plain">{settings.notesContent || 'jot something down...'}</div>
         {/if}
     </div>
 </div>
@@ -98,5 +100,15 @@
         font-size: 0.875rem;
         line-height: 1.5;
         filter: blur(4px);
+    }
+    .notes-plain {
+        width: 100%;
+        flex: 1;
+        min-height: 8rem;
+        color: var(--txt-3);
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
     }
 </style>
