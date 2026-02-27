@@ -40,6 +40,8 @@
     // Group events by date, sorted within each day
     let groupedEvents = $derived.by(() => {
         const groups = new Map()
+        const now = new Date()
+        const todayKey = now.toLocaleDateString('en-CA')
 
         for (const event of events) {
             // For all-day events, start is a date string like "2026-02-14"

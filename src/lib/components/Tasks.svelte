@@ -476,12 +476,19 @@
                                     >
                                 {/if}
                                 <span class="task-title">
-                                    <input
+                                    <span
                                         class="task-title-input"
                                         class:hidden={!isRevealed && settings.blurWidgets}
+                                        role="textbox"
                                         aria-label="edit task name"
-                                        bind:value={editBuffer[task.id]}
-                                        onblur={() => commitEdit(task.id)}
+                                        contenteditable="true"
+                                        oninput={(e) => {
+                                            editBuffer[task.id] = e.target.textContent
+                                        }}
+                                        onblur={(e) => {
+                                            editBuffer[task.id] = e.target.textContent
+                                            commitEdit(task.id)
+                                        }}
                                         onkeydown={(e) => {
                                             if (e.key === 'Enter') {
                                                 e.preventDefault()
@@ -489,7 +496,7 @@
                                             }
                                         }}
                                         tabindex={isRevealed || !settings.blurWidgets ? 0 : -1}
-                                    />
+                                    >{editBuffer[task.id] ?? ''}</span>
                                     {#if !isRevealed && settings.blurWidgets}
                                         <span class="task-title-masked">•••</span>
                                     {/if}
@@ -543,7 +550,6 @@
         align-items: baseline;
         gap: 1ch;
         max-width: 40rem;
-        white-space: nowrap;
         scroll-snap-align: start;
     }
     .task-title {
@@ -559,9 +565,8 @@
         display: block;
         width: 100%;
         min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        word-break: break-word;
+        cursor: text;
     }
     .task-title-input.hidden {
         visibility: hidden;
@@ -582,7 +587,7 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .task.completed .task-title input {
+    .task.completed .task-title-input {
         text-decoration: line-through;
     }
     .overdue {
@@ -590,6 +595,10 @@
     }
     a:hover {
         color: var(--txt-1);
+    }
+    .checkbox {
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .checkbox-x {
         color: var(--txt-2);
