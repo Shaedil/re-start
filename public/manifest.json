@@ -16,6 +16,7 @@
         "homepage": "index.html"
     },
     "permissions": ["identity"],
+    "host_permissions": ["https://api.open-meteo.com/*"],
     "oauth2": {
         "client_id": "",
         "scopes": ["https://www.googleapis.com/auth/tasks"]

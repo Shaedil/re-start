@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import fs from 'fs'
 import { execSync } from 'child_process'
@@ -50,8 +50,14 @@ function buildManifest() {
             const browser = outDir.includes('chrome') ? 'chrome' : 'firefox'
 
             try {
+                const env = loadEnv('', process.cwd(), '')
                 execSync(`node scripts/build-manifest.js ${browser} ${outDir}`, {
-                    stdio: 'inherit'
+                    stdio: 'inherit',
+                    env: {
+                        ...process.env,
+                        CLIENT_ID_DEV: env.CLIENT_ID_DEV || '',
+                        CLIENT_ID_PROD: env.CLIENT_ID_PROD || '',
+                    }
                 })
             } catch (error) {
                 console.error('Failed to build manifest:', error.message)

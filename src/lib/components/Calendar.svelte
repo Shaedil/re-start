@@ -234,7 +234,7 @@
 
 <style>
     .panel-wrapper {
-        flex: 1;
+        flex: 1 0 auto;
         max-width: 40rem;
     }
     .panel {

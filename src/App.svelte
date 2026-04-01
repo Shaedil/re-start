@@ -170,14 +170,17 @@
         padding: 2rem 1rem;
     }
     .container {
-        display: flex;
-        flex-direction: column;
+        display: grid;
         gap: 1.5rem;
     }
-    .top,
+    .top {
+        display: flex;
+        gap: 1.5rem;
+    }
     .widgets {
         display: flex;
         gap: 1.5rem;
+        width: 100%;
     }
     .settings-btn {
         position: fixed;

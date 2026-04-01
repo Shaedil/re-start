@@ -411,7 +411,10 @@
     onmouseenter={reveal}
     onmouseleave={hide}
     onfocusin={reveal}
-    onfocusout={hide}
+    onfocusout={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget)) return;
+        hide();
+    }}
     role="group"
 >
     <button
@@ -482,9 +485,6 @@
                                         role="textbox"
                                         aria-label="edit task name"
                                         contenteditable="true"
-                                        oninput={(e) => {
-                                            editBuffer[task.id] = e.target.textContent
-                                        }}
                                         onblur={(e) => {
                                             editBuffer[task.id] = e.target.textContent
                                             commitEdit(task.id)
@@ -532,8 +532,14 @@
 
 <style>
     .panel-wrapper {
-        flex: 1;
+        flex: 1 0 auto;
         max-width: 40rem;
+    }
+    .panel {
+        height: 21.25rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
     }
     .widget-header {
         display: flex;
@@ -549,16 +555,17 @@
         display: flex;
         align-items: baseline;
         gap: 1ch;
-        max-width: 40rem;
         scroll-snap-align: start;
+    }
+    .tasks-list {
+        width: 100%;
     }
     .task-title {
         position: relative;
         display: block;
         flex: 1 1 auto;
         min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        word-break: break-word;
     }
     .task-title-input {
         all: unset;

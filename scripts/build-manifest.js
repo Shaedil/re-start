@@ -5,10 +5,10 @@ const browser = process.argv[2] || 'firefox'
 const distPath = process.argv[3] || './dist'
 const manifestPath = './public/manifest.json'
 
-// OAuth2 client IDs
+// OAuth2 client IDs (set via CLIENT_ID_DEV / CLIENT_ID_PROD env vars)
 const CLIENT_IDS = {
-    dev: '992839123761-e8l791fd5kemrnticmkn93s4uidtl69i.apps.googleusercontent.com',
-    prod: '992839123761-21jho3f9ddfg4n1bus4mch0u6ekhlp0s.apps.googleusercontent.com'
+    dev: process.env.CLIENT_ID_DEV || '',
+    prod: process.env.CLIENT_ID_PROD || ''
 }
 
 // Read the source manifest
