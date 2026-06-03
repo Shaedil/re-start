@@ -534,6 +534,18 @@
                 </div>
             {/if}
 
+            <div class="group">
+                <div class="setting-label">task completion</div>
+                <div class="checkbox-group">
+                    <Checkbox bind:checked={settings.taskCelebration}
+                        >confetti</Checkbox
+                    >
+                    <Checkbox bind:checked={settings.taskCelebrationSound}
+                        >sound</Checkbox
+                    >
+                </div>
+            </div>
+
             {#if settings.showCalendar}
                 <div class="group">
                     <div class="setting-label">google calendar</div>

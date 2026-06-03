@@ -4,6 +4,7 @@
     import { settings } from '../stores/settings-store.svelte.js'
     import { isChrome } from '../utils/browser-detect.js'
     import AddTask from './AddTask.svelte'
+    import Confetti from './Confetti.svelte'
     import {
         parseSmartDate,
         stripDateMatch,
@@ -13,6 +14,19 @@
         parseProjectMatch,
         stripProjectMatch,
     } from '../utils/project-matcher.js'
+
+    // Playful labels shown when a completed task is un-completed.
+    const UNDO_PHRASES = [
+        'oops!',
+        'whoops!',
+        'nvm',
+        'jk',
+        'psych!',
+        'undo!',
+        'wait, no',
+        'my bad',
+        'not yet!',
+    ]
 
     let api = null
     let tasks = $state([])
@@ -45,6 +59,8 @@
     let togglingTasks = $state(new Set())
     let addTaskComponent = $state()
     let editBuffer = $state({})
+    let confetti = $state()
+    let audioCtx = null
 
     // Derived project match
     let parsedProject = $derived(
@@ -291,9 +307,66 @@
         }
     }
 
-    async function toggleTask(taskId, checked) {
+    // Play a short arpeggio — ascending on completion, descending in reverse
+    // when a task is un-completed.
+    function playToggleSound(completed) {
+        if (!settings.taskCelebrationSound) return
+        try {
+            audioCtx ??= new (window.AudioContext ||
+                window.webkitAudioContext)()
+            if (audioCtx.state === 'suspended') audioCtx.resume()
+
+            const start = audioCtx.currentTime
+            // C5, E5, G5 — a bright major triad, reversed when un-completing
+            const notes = completed
+                ? [523.25, 659.25, 783.99]
+                : [783.99, 659.25, 523.25]
+            notes.forEach((freq, i) => {
+                const t = start + i * 0.07
+                const osc = audioCtx.createOscillator()
+                const gain = audioCtx.createGain()
+                osc.connect(gain)
+                gain.connect(audioCtx.destination)
+                osc.type = 'triangle'
+                osc.frequency.value = freq
+                gain.gain.setValueAtTime(0.0001, t)
+                gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02)
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25)
+                osc.start(t)
+                osc.stop(t + 0.3)
+            })
+        } catch (err) {
+            console.error('failed to play toggle sound:', err)
+        }
+    }
+
+    async function toggleTask(event, taskId, checked) {
         // Prevent concurrent toggles of the same task
         if (togglingTasks.has(taskId)) return
+
+        // Animate immediately for instant, responsive feedback: burst outward
+        // on completion, implode inward (the reverse) on un-completion.
+        if (settings.taskCelebration && confetti) {
+            const rect = event?.currentTarget?.getBoundingClientRect()
+            if (rect) {
+                const cx = rect.left + rect.width / 2
+                const cy = rect.top + rect.height / 2
+                if (checked) {
+                    confetti.burst(cx, cy)
+                } else {
+                    confetti.implode(cx, cy)
+                    // Place the label just to the left of the checkbox
+                    confetti.popText(
+                        rect.left - 8,
+                        cy,
+                        UNDO_PHRASES[
+                            (Math.random() * UNDO_PHRASES.length) | 0
+                        ]
+                    )
+                }
+            }
+        }
+        playToggleSound(checked)
 
         const previousTasks = [...tasks]
         try {
@@ -463,8 +536,8 @@
                         {#each tasks as task}
                             <div class="task" class:completed={task.checked}>
                                 <button
-                                    onclick={() =>
-                                        toggleTask(task.id, !task.checked)}
+                                    onclick={(e) =>
+                                        toggleTask(e, task.id, !task.checked)}
                                     class="checkbox"
                                 >
                                     {#if task.checked}
@@ -529,6 +602,8 @@
         </div>
     </div>
 </div>
+
+<Confetti bind:this={confetti} />
 
 <style>
     .panel-wrapper {

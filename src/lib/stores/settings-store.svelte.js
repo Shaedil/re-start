@@ -26,6 +26,9 @@ let defaultSettings = {
     showQuote: false,
     showCalendar: false,
     blurWidgets: true,
+    // Task completion celebration
+    taskCelebration: true,
+    taskCelebrationSound: false,
     // Google Calendar credentials (user-provided)
     googleCalendarClientId: '',
     googleCalendarClientSecret: '',
