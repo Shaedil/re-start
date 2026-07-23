@@ -36,17 +36,13 @@
     let initialLoad = $state(true)
     let previousToken = $state(null)
     let previousBackend = $state(null)
-    let isRevealed = $state(false)
+    let isHovered = $state(false)
+    let isFocused = $state(false)
+    // Reveal while either hovered or focused, so losing focus (e.g. the add-task
+    // input being disabled mid-submit) doesn't re-hide the widget under the cursor.
+    let isRevealed = $derived(isHovered || isFocused)
     let taskCount = $derived(tasks.filter((task) => !task.checked).length)
     let taskLabel = $derived(taskCount === 1 ? 'task' : 'tasks')
-
-    function reveal() {
-        isRevealed = true
-    }
-
-    function hide() {
-        isRevealed = false
-    }
     let backendUrl = $derived.by(() => {
         if (settings.taskBackend === 'todoist')
             return 'https://app.todoist.com/app'
@@ -480,12 +476,12 @@
 
 <div
     class="panel-wrapper"
-    onmouseenter={reveal}
-    onmouseleave={hide}
-    onfocusin={reveal}
+    onmouseenter={() => (isHovered = true)}
+    onmouseleave={() => (isHovered = false)}
+    onfocusin={() => (isFocused = true)}
     onfocusout={(e) => {
         if (e.currentTarget.contains(e.relatedTarget)) return;
-        hide();
+        isFocused = false;
     }}
     role="group"
 >
