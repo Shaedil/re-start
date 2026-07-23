@@ -95,4 +95,15 @@ export const themes = {
 
 export const themeNames = Object.keys(themes)
 
+export const defaultCustomColors = {
+    bg1: '#141414',
+    bg2: '#1d1d1d',
+    bg3: '#262626',
+    txt1: '#dedede',
+    txt2: '#aeaeae',
+    txt3: '#636363',
+    txt4: '#484848',
+    txtErr: '#d6809c',
+}
+
 export const defaultTheme = 'default'
