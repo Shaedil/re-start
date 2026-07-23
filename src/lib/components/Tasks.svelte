@@ -123,9 +123,8 @@
     }
 
     function handleGlobalKeydown(event) {
-        // Only auto-focus if:
-        // 1. No input, textarea, or contenteditable element is currently focused
-        // 2. The key is a printable character (not a modifier or special key)
+        if (settings.linkHotkeys) return
+
         const activeElement = document.activeElement
         const isInputFocused =
             activeElement?.tagName === 'INPUT' ||
@@ -136,7 +135,7 @@
         if (
             addTaskComponent &&
             !isInputFocused &&
-            event.key.length === 1 && // Printable character
+            event.key.length === 1 &&
             !event.ctrlKey &&
             !event.metaKey &&
             !event.altKey
@@ -470,14 +469,14 @@
     onMount(() => {
         initializeAPI(settings.taskBackend, settings.todoistApiToken)
         document.addEventListener('visibilitychange', handleVisibilityChange)
-        document.addEventListener('keydown', handleGlobalKeydown)
     })
 
     onDestroy(() => {
         document.removeEventListener('visibilitychange', handleVisibilityChange)
-        document.removeEventListener('keydown', handleGlobalKeydown)
     })
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <div
     class="panel-wrapper"
