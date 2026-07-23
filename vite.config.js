@@ -3,6 +3,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import fs from 'fs'
 import { execSync } from 'child_process'
 import path from 'path'
+import { simpleIconsVirtualModules } from './plugins/simple-icons-virtual-modules.js'
+import { zipChromeOutput } from './plugins/zip-chrome-output.js'
 
 // Read version from manifest.json at build time
 const manifest = JSON.parse(fs.readFileSync('./public/manifest.json', 'utf-8'))
@@ -69,7 +71,14 @@ function buildManifest() {
 // https://vite.dev/config/
 export default defineConfig({
     base: './',
-    plugins: [svelte(), injectThemeCSS(), excludeManifest(), buildManifest()],
+    plugins: [
+        svelte(),
+        simpleIconsVirtualModules(),
+        injectThemeCSS(),
+        excludeManifest(),
+        buildManifest(),
+        zipChromeOutput(manifest.version),
+    ],
     define: {
         __APP_VERSION__: JSON.stringify(manifest.version),
     },

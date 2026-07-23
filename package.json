@@ -25,6 +25,7 @@
         "vitest": "^4.0.16"
     },
     "dependencies": {
-        "@fontsource-variable/geist-mono": "^5.2.7"
+        "@fontsource-variable/geist-mono": "^5.2.7",
+        "simple-icons-font": "^16.27.0"
     }
 }
