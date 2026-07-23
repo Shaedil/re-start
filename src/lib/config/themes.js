@@ -91,6 +91,134 @@ export const themes = {
             text: '#657b83',
         },
     },
+    dracula: {
+        displayName: 'dracula',
+        preview: {
+            bg: '#282a36',
+            accent: '#bd93f9',
+            text: '#f8f8f2',
+        },
+    },
+    'one-dark': {
+        displayName: 'one dark',
+        preview: {
+            bg: '#282c34',
+            accent: '#61afef',
+            text: '#abb2bf',
+        },
+    },
+    'monokai-pro': {
+        displayName: 'monokai pro',
+        preview: {
+            bg: '#2d2a2e',
+            accent: '#ffd866',
+            text: '#fcfcfa',
+        },
+    },
+    'ayu-dark': {
+        displayName: 'ayu dark',
+        preview: {
+            bg: '#0b0e14',
+            accent: '#e6b450',
+            text: '#bfbdb6',
+        },
+    },
+    'ayu-mirage': {
+        displayName: 'ayu mirage',
+        preview: {
+            bg: '#1f2430',
+            accent: '#ffcc66',
+            text: '#cbccc6',
+        },
+    },
+    'github-dark': {
+        displayName: 'github dark',
+        preview: {
+            bg: '#0d1117',
+            accent: '#58a6ff',
+            text: '#c9d1d9',
+        },
+    },
+    'github-light': {
+        displayName: 'github light',
+        preview: {
+            bg: '#ffffff',
+            accent: '#0969da',
+            text: '#24292f',
+        },
+    },
+    'material-palenight': {
+        displayName: 'material palenight',
+        preview: {
+            bg: '#292d3e',
+            accent: '#c792ea',
+            text: '#a6accd',
+        },
+    },
+    oxocarbon: {
+        displayName: 'oxocarbon',
+        preview: {
+            bg: '#161616',
+            accent: '#33b1ff',
+            text: '#dde1e6',
+        },
+    },
+    'gruvbox-light': {
+        displayName: 'gruvbox light',
+        preview: {
+            bg: '#fbf1c7',
+            accent: '#b57614',
+            text: '#3c3836',
+        },
+    },
+    nightfox: {
+        displayName: 'nightfox',
+        preview: {
+            bg: '#192330',
+            accent: '#719cd6',
+            text: '#cdcecf',
+        },
+    },
+    'rose-pine-dawn': {
+        displayName: 'rosé pine dawn',
+        preview: {
+            bg: '#faf4ed',
+            accent: '#d7827e',
+            text: '#575279',
+        },
+    },
+    'tokyo-night-day': {
+        displayName: 'tokyo night day',
+        preview: {
+            bg: '#e1e2e7',
+            accent: '#2e7de9',
+            text: '#3760bf',
+        },
+    },
+    'everforest-light': {
+        displayName: 'everforest light',
+        preview: {
+            bg: '#fdf6e3',
+            accent: '#8da101',
+            text: '#5c6a72',
+        },
+    },
+    'one-light': {
+        displayName: 'one light',
+        preview: {
+            bg: '#fafafa',
+            accent: '#4078f2',
+            text: '#383a42',
+        },
+    },
+    'ayu-light': {
+        displayName: 'ayu light',
+        preview: {
+            bg: '#fcfcfc',
+            accent: '#fa8d3e',
+            text: '#5c6166',
+        },
+    },
     custom: {
         displayName: 'custom',
         preview: null, // preview comes from settings.customThemeColors

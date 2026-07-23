@@ -148,12 +148,17 @@
             forecast = data.forecast
             offline = data.offline || false
         } catch (err) {
-            if (!navigator.onLine) {
+            console.error('weather load failed:', err)
+            if (current) {
+                // We loaded stale cache before fetching — keep showing it with a
+                // cached indicator rather than hiding it behind an error (error is
+                // already null from the start of the try).
+                offline = true
+            } else if (!navigator.onLine) {
                 error = 'offline'
             } else {
                 error = 'failed to load weather'
             }
-            console.error('weather load failed:', err)
         } finally {
             loading = false
         }
@@ -229,10 +234,14 @@
                     {#each forecast as forecast}
                         {#if settings.forecastMode === 'daily'}
                             <div class="forecast-temp">
-                                {forecast.temperatureMax}° <span class="separator">/</span> {forecast.temperatureMin}°{settings.tempUnit[0].toUpperCase()}
+                                {forecast.temperatureMax}° <span
+                                    class="separator">/</span
+                                > {forecast.temperatureMin}°{settings.tempUnit[0].toUpperCase()}
                             </div>
                         {:else}
-                            <div class="forecast-temp">{forecast.temperature}°{settings.tempUnit[0].toUpperCase()}</div>
+                            <div class="forecast-temp">
+                                {forecast.temperature}°{settings.tempUnit[0].toUpperCase()}
+                            </div>
                         {/if}
                     {/each}
                 </div>
@@ -257,7 +266,7 @@
     }
     .temp {
         font-size: 2rem;
-        font-weight: 300;
+        font-weight: var(--font-weight-light);
         color: var(--txt-num);
         line-height: 2.625rem;
     }

@@ -108,3 +108,4 @@ Tests are located in `src/lib/tests/`. Currently only `date-matcher.test.js` exi
 - Google Tasks functionality is Chrome-only due to `chrome.identity.getAuthToken()` API requirement
 - Theme data is injected at build time to prevent FOUC (Flash of Unstyled Content)
 - All task backends must implement the TaskBackend abstract class interface
+- htdp.transparent: false

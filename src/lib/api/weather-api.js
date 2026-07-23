@@ -8,6 +8,7 @@ class WeatherAPI {
         this.baseUrl = 'https://api.open-meteo.com/v1/forecast'
         this.cacheKey = 'weather_data'
         this.cacheExpiry = 15 * 60 * 1000
+        this.fetchTimeout = 8 * 1000
     }
 
     /**
@@ -172,12 +173,20 @@ class WeatherAPI {
 
         const params = new URLSearchParams(baseParams)
 
-        const response = await fetch(`${this.baseUrl}?${params}`)
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status} ${response.statusText}`)
+        try {
+            const response = await fetch(`${this.baseUrl}?${params}`, {
+                signal: AbortSignal.timeout(this.fetchTimeout),
+            })
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} ${response.statusText}`)
+            }
+            return await response.json()
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                throw new Error(`weather request timed out after ${this.fetchTimeout}ms`)
+            }
+            throw error
         }
-        const data = await response.json()
-        return data
     }
 
     /**
@@ -343,7 +352,9 @@ class WeatherAPI {
      */
     _formatDate(dateString) {
         const date = new Date(dateString + 'T00:00:00')
-        return date.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase()
+        return date
+            .toLocaleDateString('en-US', { weekday: 'short' })
+            .toLowerCase()
     }
 
     /**

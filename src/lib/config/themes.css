@@ -198,3 +198,280 @@
     --txt-orange: #cb4b16;
     --txt-magenta: #d33682;
 }
+
+.theme-dracula {
+    --bg-1: #282a36;
+    --bg-2: #343746;
+    --bg-3: #44475a;
+    --txt-1: #f8f8f2;
+    --txt-2: #d8d8d2;
+    --txt-3: #6272a4;
+    --txt-4: #bd93f9;
+    --txt-err: #ff5555;
+    --txt-num: #f1fa8c;
+    --txt-link: #8be9fd;
+    --txt-green: #50fa7b;
+    --txt-violet: #bd93f9;
+    --txt-orange: #ffb86c;
+    --txt-magenta: #ff79c6;
+}
+
+.theme-one-dark {
+    --bg-1: #282c34;
+    --bg-2: #2c313a;
+    --bg-3: #3e4451;
+    --txt-1: #ffffff;
+    --txt-2: #abb2bf;
+    --txt-3: #5c6370;
+    --txt-4: #61afef;
+    --txt-err: #e06c75;
+    --txt-num: #d19a66;
+    --txt-link: #61afef;
+    --txt-green: #98c379;
+    --txt-violet: #c678dd;
+    --txt-orange: #d19a66;
+    --txt-magenta: #e06c75;
+}
+
+.theme-monokai-pro {
+    --bg-1: #2d2a2e;
+    --bg-2: #363337;
+    --bg-3: #403e41;
+    --txt-1: #fcfcfa;
+    --txt-2: #c1c0c0;
+    --txt-3: #727072;
+    --txt-4: #ffd866;
+    --txt-err: #ff6188;
+    --txt-num: #ab9df2;
+    --txt-link: #78dce8;
+    --txt-green: #a9dc76;
+    --txt-violet: #ab9df2;
+    --txt-orange: #fc9867;
+    --txt-magenta: #ff6188;
+}
+
+.theme-ayu-dark {
+    --bg-1: #0b0e14;
+    --bg-2: #11151c;
+    --bg-3: #1f2430;
+    --txt-1: #f3f4f5;
+    --txt-2: #bfbdb6;
+    --txt-3: #4d5566;
+    --txt-4: #e6b450;
+    --txt-err: #f07178;
+    --txt-num: #e6b450;
+    --txt-link: #59c2ff;
+    --txt-green: #aad94c;
+    --txt-violet: #d2a6ff;
+    --txt-orange: #ff8f40;
+    --txt-magenta: #f07178;
+}
+
+.theme-ayu-mirage {
+    --bg-1: #1f2430;
+    --bg-2: #232834;
+    --bg-3: #2d3340;
+    --txt-1: #ffffff;
+    --txt-2: #cbccc6;
+    --txt-3: #707a8c;
+    --txt-4: #ffcc66;
+    --txt-err: #f28779;
+    --txt-num: #ffcc66;
+    --txt-link: #73d0ff;
+    --txt-green: #bae67e;
+    --txt-violet: #d4bfff;
+    --txt-orange: #ffa759;
+    --txt-magenta: #f28779;
+}
+
+.theme-github-dark {
+    --bg-1: #0d1117;
+    --bg-2: #161b22;
+    --bg-3: #21262d;
+    --txt-1: #f0f6fc;
+    --txt-2: #c9d1d9;
+    --txt-3: #8b949e;
+    --txt-4: #58a6ff;
+    --txt-err: #f85149;
+    --txt-num: #d29922;
+    --txt-link: #58a6ff;
+    --txt-green: #3fb950;
+    --txt-violet: #bc8cff;
+    --txt-orange: #ffa657;
+    --txt-magenta: #ff7b72;
+}
+
+.theme-github-light {
+    --bg-1: #ffffff;
+    --bg-2: #f6f8fa;
+    --bg-3: #eaeef2;
+    --txt-1: #1f2328;
+    --txt-2: #24292f;
+    --txt-3: #6e7781;
+    --txt-4: #0969da;
+    --txt-err: #cf222e;
+    --txt-num: #953800;
+    --txt-link: #0969da;
+    --txt-green: #1a7f37;
+    --txt-violet: #8250df;
+    --txt-orange: #bc4c00;
+    --txt-magenta: #bf3989;
+}
+
+.theme-material-palenight {
+    --bg-1: #292d3e;
+    --bg-2: #2f334a;
+    --bg-3: #373b53;
+    --txt-1: #eeffff;
+    --txt-2: #a6accd;
+    --txt-3: #676e95;
+    --txt-4: #c792ea;
+    --txt-err: #ff5370;
+    --txt-num: #f78c6c;
+    --txt-link: #82aaff;
+    --txt-green: #c3e88d;
+    --txt-violet: #c792ea;
+    --txt-orange: #ffcb6b;
+    --txt-magenta: #f07178;
+}
+
+.theme-oxocarbon {
+    --bg-1: #161616;
+    --bg-2: #1f1f1f;
+    --bg-3: #262626;
+    --txt-1: #f2f4f8;
+    --txt-2: #dde1e6;
+    --txt-3: #525252;
+    --txt-4: #33b1ff;
+    --txt-err: #ff7eb6;
+    --txt-num: #3ddbd9;
+    --txt-link: #33b1ff;
+    --txt-green: #42be65;
+    --txt-violet: #be95ff;
+    --txt-orange: #ee5396;
+    --txt-magenta: #ff7eb6;
+}
+
+.theme-gruvbox-light {
+    --bg-1: #fbf1c7;
+    --bg-2: #ebdbb2;
+    --bg-3: #d5c4a1;
+    --txt-1: #3c3836;
+    --txt-2: #504945;
+    --txt-3: #7c6f64;
+    --txt-4: #b57614;
+    --txt-err: #cc241d;
+    --txt-num: #b57614;
+    --txt-link: #076678;
+    --txt-green: #79740e;
+    --txt-violet: #8f3f71;
+    --txt-orange: #af3a03;
+    --txt-magenta: #b16286;
+}
+
+.theme-nightfox {
+    --bg-1: #192330;
+    --bg-2: #212e3f;
+    --bg-3: #29394f;
+    --txt-1: #cdcecf;
+    --txt-2: #aeafb0;
+    --txt-3: #71839b;
+    --txt-4: #719cd6;
+    --txt-err: #c94f6d;
+    --txt-num: #dbc074;
+    --txt-link: #719cd6;
+    --txt-green: #81b29a;
+    --txt-violet: #9d79d6;
+    --txt-orange: #f4a261;
+    --txt-magenta: #d67ad2;
+}
+
+.theme-rose-pine-dawn {
+    --bg-1: #faf4ed;
+    --bg-2: #fffaf3;
+    --bg-3: #f2e9e1;
+    --txt-1: #575279;
+    --txt-2: #797593;
+    --txt-3: #9893a5;
+    --txt-4: #d7827e;
+    --txt-err: #b4637a;
+    /* Rosé Pine Dawn accent colors */
+    --txt-num: #ea9d34;
+    --txt-link: #56949f;
+    --txt-green: #286983;
+    --txt-violet: #907aa9;
+    --txt-orange: #ea9d34;
+    --txt-magenta: #d7827e;
+}
+
+.theme-tokyo-night-day {
+    --bg-1: #e1e2e7;
+    --bg-2: #e9e9ed;
+    --bg-3: #c4c8da;
+    --txt-1: #3760bf;
+    --txt-2: #6172b0;
+    --txt-3: #848cb5;
+    --txt-4: #2e7de9;
+    --txt-err: #f52a65;
+    /* Tokyo Night Day accent colors */
+    --txt-num: #8c6c3e;
+    --txt-link: #2e7de9;
+    --txt-green: #587539;
+    --txt-violet: #9854f1;
+    --txt-orange: #b15c00;
+    --txt-magenta: #007197;
+}
+
+.theme-everforest-light {
+    --bg-1: #fdf6e3;
+    --bg-2: #f4f0d9;
+    --bg-3: #efebd4;
+    --txt-1: #5c6a72;
+    --txt-2: #708089;
+    --txt-3: #939f91;
+    --txt-4: #8da101;
+    --txt-err: #f85552;
+    /* Everforest Light accent colors */
+    --txt-num: #dfa000;
+    --txt-link: #3a94c5;
+    --txt-green: #8da101;
+    --txt-violet: #df69ba;
+    --txt-orange: #f57d26;
+    --txt-magenta: #35a77c;
+}
+
+.theme-one-light {
+    --bg-1: #fafafa;
+    --bg-2: #eaeaeb;
+    --bg-3: #dbdbdc;
+    --txt-1: #383a42;
+    --txt-2: #696c77;
+    --txt-3: #a0a1a7;
+    --txt-4: #4078f2;
+    --txt-err: #e45649;
+    /* One Light accent colors */
+    --txt-num: #c18401;
+    --txt-link: #4078f2;
+    --txt-green: #50a14f;
+    --txt-violet: #a626a4;
+    --txt-orange: #986801;
+    --txt-magenta: #0184bc;
+}
+
+.theme-ayu-light {
+    --bg-1: #fcfcfc;
+    --bg-2: #f3f4f5;
+    --bg-3: #e7e8e9;
+    --txt-1: #5c6166;
+    --txt-2: #787b80;
+    --txt-3: #abb0b6;
+    --txt-4: #fa8d3e;
+    --txt-err: #f07171;
+    /* Ayu Light accent colors */
+    --txt-num: #f2ae49;
+    --txt-link: #399ee6;
+    --txt-green: #86b300;
+    --txt-violet: #a37acc;
+    --txt-orange: #fa8d3e;
+    --txt-magenta: #e6ba7e;
+}

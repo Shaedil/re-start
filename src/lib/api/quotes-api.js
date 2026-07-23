@@ -47,6 +47,47 @@ const QUOTES = [
     { content: "If you're not embarrassed by the first version of your product, you've launched too late.", author: "Reid Hoffman" },
     { content: "Done is better than perfect.", author: "Sheryl Sandberg" },
     { content: "The best minds of my generation are thinking about how to make people click ads.", author: "Jeff Hammerbacher" },
+    // Naval Ravikant
+    { content: "Play long-term games with long-term people.", author: "Naval Ravikant" },
+    { content: "Seek wealth, not money or status.", author: "Naval Ravikant" },
+    { content: "Earn with your mind, not your time.", author: "Naval Ravikant" },
+    { content: "A fit body, a calm mind, a house full of love. These things cannot be bought.", author: "Naval Ravikant" },
+    { content: "Reading is faster than listening. Doing is faster than watching.", author: "Naval Ravikant" },
+    // Reid Hoffman
+    { content: "An entrepreneur is someone who jumps off a cliff and builds a plane on the way down.", author: "Reid Hoffman" },
+    { content: "No matter how brilliant your mind or strategy, if you're playing a solo game, you'll always lose out to a team.", author: "Reid Hoffman" },
+    // Jensen Huang
+    { content: "I don't like giving up on people. Resilience matters in success.", author: "Jensen Huang" },
+    { content: "Pain and suffering, while you're going through it, builds character.", author: "Jensen Huang" },
+    // Drew Houston
+    { content: "Don't worry about failure; you only have to be right once.", author: "Drew Houston" },
+    // Tobi Lütke
+    { content: "Building a company is one of the most aggressive forms of personal development out there.", author: "Tobi Lütke" },
+    // Patrick Collison
+    { content: "Optimism is a force multiplier.", author: "Patrick Collison" },
+    { content: "You can just do things.", author: "Patrick Collison" },
+    // Linus Torvalds
+    { content: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+    { content: "Given enough eyeballs, all bugs are shallow.", author: "Linus Torvalds" },
+    // Engineering wisdom
+    { content: "Premature optimization is the root of all evil.", author: "Donald Knuth" },
+    { content: "There are only two hard things in computer science: cache invalidation and naming things.", author: "Phil Karlton" },
+    { content: "Programs must be written for people to read, and only incidentally for machines to execute.", author: "Harold Abelson" },
+    { content: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+    { content: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
+    { content: "Make it work, make it right, make it fast.", author: "Kent Beck" },
+    { content: "The best code is no code at all.", author: "Jeff Atwood" },
+    { content: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" },
+    { content: "Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away.", author: "Antoine de Saint-Exupéry" },
+    // Timeless
+    { content: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford" },
+    { content: "The only thing we have to fear is fear itself.", author: "Franklin D. Roosevelt" },
+    { content: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { content: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
+    { content: "Discipline equals freedom.", author: "Jocko Willink" },
+    { content: "Hard choices, easy life. Easy choices, hard life.", author: "Jerzy Gregorek" },
+    { content: "What you do speaks so loudly that I cannot hear what you say.", author: "Ralph Waldo Emerson" },
+    { content: "The man who moves a mountain begins by carrying away small stones.", author: "Confucius" },
 ]
 
 export class QuotesAPI {

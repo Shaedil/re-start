@@ -40,8 +40,6 @@
     // Group events by date, sorted within each day
     let groupedEvents = $derived.by(() => {
         const groups = new Map()
-        const now = new Date()
-        const todayKey = now.toLocaleDateString('en-CA')
 
         for (const event of events) {
             // For all-day events, start is a date string like "2026-02-14"
@@ -65,8 +63,11 @@
             })
         }
 
-        // Sort groups by date
-        return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
+        // Drop any day whose events have all ended so the agenda rolls forward,
+        // then sort the remaining groups by date.
+        return [...groups.entries()]
+            .filter(([, dayEvents]) => !dayEvents.every(isEventPast))
+            .sort(([a], [b]) => a.localeCompare(b))
     })
 
     function formatDayLabel(dateKey) {
@@ -208,7 +209,7 @@
             </div>
         {:else if error}
             <div class="error">{error}</div>
-        {:else if events.length === 0}
+        {:else if groupedEvents.length === 0}
             <div class="message">no events</div>
         {:else}
             <div class="agenda">
