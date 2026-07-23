@@ -1,19 +1,30 @@
 <script>
-    import { onDestroy } from 'svelte'
+    import { onDestroy, tick } from 'svelte'
     import { fade, fly } from 'svelte/transition'
     import {
         saveSettings,
         settings,
         resetSettings,
     } from '../stores/settings-store.svelte.js'
-    import { themeNames, themes } from '../config/themes.js'
+    import {
+        themeNames,
+        themes,
+        defaultCustomColors,
+    } from '../config/themes.js'
     import RadioButton from './ui/RadioButton.svelte'
     import Checkbox from './ui/Checkbox.svelte'
     import { createTaskBackend } from '../backends/index.js'
     import { isChrome } from '../utils/browser-detect.js'
     import GoogleCalendarBackend from '../backends/google-calendar-backend.js'
+    import {
+        guessIconSlug,
+        isValidSlug,
+        extractDomain,
+    } from '../utils/link-icons.js'
+    import IconPicker from './IconPicker.svelte'
 
     let { showSettings = false, closeSettings } = $props()
+    const prevDomains = new WeakMap()
 
     // Check if Google Tasks is available (Chrome only)
     const googleTasksAvailable = isChrome()
@@ -146,6 +157,13 @@
         calendarSignInError = ''
     }
 
+    function googleSignInLabel() {
+        if (settings.googleTasksSignedIn) return 'sign out'
+        if (signInError) return signInError
+        if (signingIn) return 'signing in...'
+        return 'sign in with google'
+    }
+
     async function handleGoogleSignIn() {
         try {
             signingIn = true
@@ -182,8 +200,38 @@
         }
     }
 
+    let iconPickerOpen = $state(null)
+    let iconPickerRef = $state(null)
+
+    function toggleIconPicker(index) {
+        if (iconPickerOpen === index) {
+            iconPickerOpen = null
+        } else {
+            iconPickerOpen = index
+            tick().then(() => iconPickerRef?.focusInput())
+        }
+    }
+
+    function initPrevDomain(link) {
+        if (!prevDomains.has(link)) {
+            prevDomains.set(link, extractDomain(link.url))
+        }
+    }
+
+    function handleUrlChange(link) {
+        const oldDomain = prevDomains.get(link) ?? ''
+        const newDomain = extractDomain(link.url)
+        if (oldDomain !== newDomain) {
+            link.icon = guessIconSlug(link.url) || ''
+            prevDomains.set(link, newDomain)
+        }
+    }
+
     function addLink() {
-        settings.links = [...settings.links, { title: '', url: '' }]
+        settings.links = [
+            ...settings.links,
+            { title: '', url: '', icon: '', hotkey: '' },
+        ]
     }
 
     function removeLink(index) {
@@ -196,6 +244,7 @@
     }
 
     function handleKeydown(event) {
+        if (!showSettings) return
         if (event.key === 'Escape') {
             handleClose()
         }
@@ -244,6 +293,24 @@
         reader.readAsText(file)
         event.target.value = ''
     }
+
+    function setCustomColor(key, value) {
+        settings.customThemeColors = {
+            ...settings.customThemeColors,
+            [key]: value,
+        }
+    }
+
+    const customColorLabels = [
+        { key: 'bg1', label: 'bg 1' },
+        { key: 'bg2', label: 'bg 2' },
+        { key: 'bg3', label: 'bg 3' },
+        { key: 'txt4', label: 'label' },
+        { key: 'txt3', label: 'txt 3' },
+        { key: 'txt2', label: 'txt 2' },
+        { key: 'txt1', label: 'txt 1' },
+        { key: 'txtErr', label: 'error' },
+    ]
 
     // Drag and drop state
     let draggedIndex = $state(null)
@@ -365,7 +432,7 @@
     })
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if showSettings}
     <div
@@ -387,7 +454,7 @@
             <div class="group">
                 <div class="setting-label">widgets</div>
                 <div class="checkbox-group">
-                    <Checkbox bind:checked={settings.showClock}>clock</Checkbox>
+                    <Checkbox bind:checked={settings.showClock}>datetime</Checkbox>
                     <Checkbox bind:checked={settings.showStats}>stats</Checkbox>
                     <Checkbox bind:checked={settings.showWeather}>weather</Checkbox>
                     <Checkbox bind:checked={settings.showTasks}>tasks</Checkbox>
@@ -409,23 +476,25 @@
                                 bind:group={settings.currentTheme}
                                 value={themeName}
                             >
-                                <div class="theme-preview">
-                                    <div
-                                        style="background-color: {themes[
-                                            themeName
-                                        ].preview.bg}"
-                                    ></div>
-                                    <div
-                                        style="background-color: {themes[
-                                            themeName
-                                        ].preview.accent}"
-                                    ></div>
-                                    <div
-                                        style="background-color: {themes[
-                                            themeName
-                                        ].preview.text}"
-                                    ></div>
-                                </div>
+                                {#if themeName !== 'custom'}
+                                    <div class="theme-preview">
+                                        <div
+                                            style="background-color: {themes[
+                                                themeName
+                                            ].preview.bg}"
+                                        ></div>
+                                        <div
+                                            style="background-color: {themes[
+                                                themeName
+                                            ].preview.accent}"
+                                        ></div>
+                                        <div
+                                            style="background-color: {themes[
+                                                themeName
+                                            ].preview.text}"
+                                        ></div>
+                                    </div>
+                                {/if}
                                 <span class="theme-name"
                                     >{themes[themeName].displayName}</span
                                 >
@@ -433,27 +502,89 @@
                         </div>
                     {/each}
                 </div>
+                {#if settings.currentTheme === 'custom'}
+                    <div class="custom-colors-grid">
+                        {#each customColorLabels as { key, label }}
+                            <div class="color-input-row">
+                                <input
+                                    type="color"
+                                    id="color-{key}"
+                                    value={settings.customThemeColors[key]}
+                                    oninput={(e) =>
+                                        setCustomColor(key, e.target.value)}
+                                />
+                                <label for="color-{key}">{label}</label>
+                                <input
+                                    type="text"
+                                    value={settings.customThemeColors[key]}
+                                    oninput={(e) =>
+                                        setCustomColor(key, e.target.value)}
+                                    class="color-text"
+                                />
+                            </div>
+                        {/each}
+                    </div>
+                    <button
+                        class="button bottom"
+                        onclick={() => {
+                            settings.customThemeColors = {
+                                ...defaultCustomColors,
+                            }
+                        }}
+                    >
+                        <span class="bracket">[</span><span class="action-text"
+                            >reset custom theme</span
+                        ><span class="bracket">]</span>
+                    </button>
+                {/if}
             </div>
             <div class="group">
-                <label for="font">font</label>
-                <select id="font" bind:value={settings.font}>
-                    <option value="">Geist Mono Variable (default)</option>
-                    <optgroup label="Google Fonts">
-                        <option value="JetBrains Mono">JetBrains Mono</option>
-                        <option value="Fira Code">Fira Code</option>
-                        <option value="Source Code Pro">Source Code Pro</option>
-                        <option value="IBM Plex Mono">IBM Plex Mono</option>
-                        <option value="Roboto Mono">Roboto Mono</option>
-                        <option value="Inconsolata">Inconsolata</option>
-                        <option value="Ubuntu Mono">Ubuntu Mono</option>
-                        <option value="Space Mono">Space Mono</option>
-                    </optgroup>
-                    <optgroup label="System Fonts">
-                        <option value="monospace">System Default</option>
-                        <option value="SF Mono, Menlo, Monaco, monospace">SF Mono (macOS)</option>
-                        <option value="Consolas, monospace">Consolas (Windows)</option>
-                    </optgroup>
-                </select>
+                <div class="split">
+                    <div class="col">
+                        <label for="font">font</label>
+                        <select id="font" bind:value={settings.font}>
+                            <option value=""
+                                >Geist Mono Variable (default)</option
+                            >
+                            <optgroup label="Google Fonts">
+                                <option value="JetBrains Mono"
+                                    >JetBrains Mono</option
+                                >
+                                <option value="Fira Code">Fira Code</option>
+                                <option value="Source Code Pro"
+                                    >Source Code Pro</option
+                                >
+                                <option value="IBM Plex Mono"
+                                    >IBM Plex Mono</option
+                                >
+                                <option value="Roboto Mono">Roboto Mono</option>
+                                <option value="Inconsolata">Inconsolata</option>
+                                <option value="Ubuntu Mono">Ubuntu Mono</option>
+                                <option value="Space Mono">Space Mono</option>
+                            </optgroup>
+                            <optgroup label="System Fonts">
+                                <option value="monospace">System Default</option>
+                                <option value="SF Mono, Menlo, Monaco, monospace"
+                                    >SF Mono (macOS)</option
+                                >
+                                <option value="Consolas, monospace"
+                                    >Consolas (Windows)</option
+                                >
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col font-weight-col">
+                        <label for="font-weight">weight</label>
+                        <input
+                            id="font-weight"
+                            type="number"
+                            bind:value={settings.fontWeight}
+                            min="1"
+                            max="1000"
+                            placeholder="400"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div class="group">
@@ -479,12 +610,9 @@
             <div class="group">
                 <div class="setting-label">task backend</div>
                 <div class="radio-group">
-                    <RadioButton
-                        bind:group={settings.taskBackend}
-                        value="local"
+                    <RadioButton bind:group={settings.taskBackend} value="local"
+                        >local</RadioButton
                     >
-                        local
-                    </RadioButton>
                     <RadioButton
                         bind:group={settings.taskBackend}
                         value="todoist"
@@ -523,13 +651,7 @@
                             : handleGoogleSignIn}
                         disabled={signingIn}
                     >
-                        [{settings.googleTasksSignedIn
-                            ? 'sign out'
-                            : signInError
-                              ? signInError
-                              : signingIn
-                                ? 'signing in...'
-                                : 'sign in with google'}]
+                        [{googleSignInLabel()}]
                     </button>
                 </div>
             {/if}
@@ -682,48 +804,44 @@
                     >
                         manual
                     </RadioButton>
-                    <RadioButton
-                        bind:group={settings.locationMode}
-                        value="auto"
+                    <RadioButton bind:group={settings.locationMode} value="auto"
+                        >auto</RadioButton
                     >
-                        auto
-                    </RadioButton>
                 </div>
             </div>
 
             {#if settings.locationMode === 'manual'}
-                <div class="supergroup short">
-                    <div class="group">
-                        <label for="latitude">weather latitude</label>
-                        <input
-                            id="latitude"
-                            type="number"
-                            bind:value={settings.latitude}
-                            step="0.01"
-                        />
-                    </div>
-                    <div class="group">
-                        <label for="longitude">weather longitude</label>
-                        <input
-                            id="longitude"
-                            type="number"
-                            bind:value={settings.longitude}
-                            step="0.01"
-                        />
-                    </div>
-                </div>
                 <div class="group">
+                    <div class="split">
+                        <div class="col">
+                            <label for="latitude">weather latitude</label>
+                            <input
+                                id="latitude"
+                                type="number"
+                                bind:value={settings.latitude}
+                                step="0.01"
+                            />
+                        </div>
+                        <div class="col">
+                            <label for="longitude">weather longitude</label>
+                            <input
+                                id="longitude"
+                                type="number"
+                                bind:value={settings.longitude}
+                                step="0.01"
+                            />
+                        </div>
+                    </div>
                     <button
-                        class="button"
+                        class="button bottom"
                         onclick={useCurrentLocation}
                         disabled={locationLoading}
                     >
                         <span class="bracket">[</span><span class="action-text"
-                            >{locationError
-                                ? locationError
-                                : locationLoading
-                                  ? 'getting location...'
-                                  : 'use current location'}</span
+                            >{locationError ||
+                                (locationLoading
+                                    ? 'getting location...'
+                                    : 'use current location')}</span
                         ><span class="bracket">]</span>
                     </button>
                 </div>
@@ -732,12 +850,19 @@
             <div class="group">
                 <div class="setting-label">time format</div>
                 <div class="radio-group">
-                    <RadioButton bind:group={settings.timeFormat} value="12hr">
-                        12 hour
-                    </RadioButton>
-                    <RadioButton bind:group={settings.timeFormat} value="24hr">
-                        24 hour
-                    </RadioButton>
+                    <RadioButton bind:group={settings.timeFormat} value="12hr"
+                        >12 hour</RadioButton
+                    >
+                    <RadioButton bind:group={settings.timeFormat} value="24hr"
+                        >24 hour</RadioButton
+                    >
+                </div>
+            </div>
+            <div class="group">
+                <div class="setting-label">seconds</div>
+                <div class="radio-group">
+                    <RadioButton bind:group={settings.showSeconds} value={true}>show</RadioButton>
+                    <RadioButton bind:group={settings.showSeconds} value={false}>hide</RadioButton>
                 </div>
             </div>
             <div class="group">
@@ -768,12 +893,12 @@
             <div class="group">
                 <div class="setting-label">speed format</div>
                 <div class="radio-group">
-                    <RadioButton bind:group={settings.speedUnit} value="mph">
-                        mph
-                    </RadioButton>
-                    <RadioButton bind:group={settings.speedUnit} value="kmh">
-                        kmh
-                    </RadioButton>
+                    <RadioButton bind:group={settings.speedUnit} value="mph"
+                        >mph</RadioButton
+                    >
+                    <RadioButton bind:group={settings.speedUnit} value="kmh"
+                        >kmh</RadioButton
+                    >
                 </div>
             </div>
             <div class="group">
@@ -787,6 +912,62 @@
                         value="_blank"
                     >
                         new tab
+                    </RadioButton>
+                </div>
+            </div>
+            <div class="group">
+                <div class="setting-label">link hotkeys</div>
+                <div class="radio-group">
+                    <RadioButton bind:group={settings.linkHotkeys} value={true}>
+                        on
+                    </RadioButton>
+                    <RadioButton
+                        bind:group={settings.linkHotkeys}
+                        value={false}
+                    >
+                        off
+                    </RadioButton>
+                </div>
+            </div>
+            {#if settings.linkHotkeys}
+                <div class="group">
+                    <div class="setting-label">hotkey hint position</div>
+                    <div class="radio-group">
+                        <RadioButton
+                            bind:group={settings.linkHotkeyPosition}
+                            value="left"
+                        >
+                            left
+                        </RadioButton>
+                        <RadioButton
+                            bind:group={settings.linkHotkeyPosition}
+                            value="right"
+                        >
+                            right
+                        </RadioButton>
+                    </div>
+                </div>
+            {/if}
+            <div class="group">
+                <div class="setting-label">link icons</div>
+                <div class="radio-group">
+                    <RadioButton
+                        bind:group={settings.linkIconMode}
+                        value="icons"
+                    >
+                        show icons
+                    </RadioButton>
+                    <RadioButton
+                        bind:group={settings.linkIconMode}
+                        value="arrow"
+                    >
+                        show &gt;
+                    </RadioButton>
+                    <RadioButton
+                        bind:group={settings.linkIconMode}
+                        value="none"
+                    >
+                        hide
                     </RadioButton>
                 </div>
             </div>
@@ -816,6 +997,7 @@
                             role="none"
                         ></div>
 
+                        {@const _ = initPrevDomain(link)}
                         <div
                             class="link"
                             class:dragging={draggedIndex === index}
@@ -830,6 +1012,18 @@
                                 role="button"
                                 tabindex="0">=</span
                             >
+                            <button
+                                class="icon-btn"
+                                title={link.icon || 'pick icon'}
+                                onclick={() => toggleIconPicker(index)}
+                                draggable="false"
+                            >
+                                {#if isValidSlug(link.icon)}
+                                    <span class="si si-{link.icon}"></span>
+                                {:else}
+                                    <span class="icon-placeholder">></span>
+                                {/if}
+                            </button>
                             <input
                                 type="text"
                                 bind:value={link.title}
@@ -840,10 +1034,35 @@
                             <input
                                 type="url"
                                 bind:value={link.url}
+                                onchange={() => handleUrlChange(link)}
                                 placeholder="https://example.com"
-                                class="link-input"
+                                class="link-input url"
                                 draggable="false"
                             />
+                            {#if settings.linkHotkeys}
+                                <input
+                                    type="text"
+                                    bind:value={link.hotkey}
+                                    placeholder="⌘"
+                                    class="link-input hotkey"
+                                    maxlength="1"
+                                    draggable="false"
+                                    oninput={(e) => {
+                                        const key = e.target.value.slice(-1)
+                                        if (key) {
+                                            for (const other of settings.links) {
+                                                if (
+                                                    other !== link &&
+                                                    other.hotkey === key
+                                                ) {
+                                                    other.hotkey = ''
+                                                }
+                                            }
+                                        }
+                                        link.hotkey = key
+                                    }}
+                                />
+                            {/if}
                             <button
                                 class="remove-btn"
                                 onclick={() => removeLink(index)}
@@ -851,6 +1070,16 @@
                                 x
                             </button>
                         </div>
+                        {#if iconPickerOpen === index}
+                            <IconPicker
+                                bind:this={iconPickerRef}
+                                icon={link.icon}
+                                onselect={(slug) => {
+                                    link.icon = slug
+                                    iconPickerOpen = null
+                                }}
+                            />
+                        {/if}
                     {/each}
 
                     <!-- Drop zone after the last item -->
@@ -865,6 +1094,15 @@
                         role="none"
                     ></div>
                 </div>
+            </div>
+            <div class="group">
+                <label for="ping-url">ping stats url</label>
+                <input
+                    id="ping-url"
+                    type="text"
+                    bind:value={settings.pingUrl}
+                    placeholder="https://www.google.com/generate_204"
+                />
             </div>
             <div class="group">
                 <label for="custom-css">custom css</label>
@@ -956,7 +1194,7 @@
         padding: 0 0.5rem;
         font-size: 1.5rem;
         line-height: 2.25rem;
-        font-weight: 300;
+        font-weight: var(--font-weight-light);
     }
     .content {
         flex: 1;
@@ -965,19 +1203,22 @@
         scrollbar-width: thin;
         scrollbar-color: var(--bg-3) var(--bg-1);
     }
-    .supergroup {
+    .split {
         display: flex;
         gap: 1rem;
-
-        &.short .group {
-            margin-bottom: 1rem;
-        }
+    }
+    .col {
+        flex: 1;
+    }
+    .font-weight-col {
+        flex: 0 0 5rem;
     }
     .group {
         flex: 1;
         margin-bottom: 1.5rem;
     }
     .group > label,
+    .col > label,
     .setting-label {
         display: block;
         margin-bottom: 0.5rem;
@@ -986,18 +1227,15 @@
     .group input[type='password'],
     .group input[type='number'],
     .group input[type='url'],
-    .group select {
+    .group select,
+    .group textarea {
         width: 100%;
-        padding: 0.5rem;
+        padding: 0.375rem;
         background: var(--bg-2);
         border: 2px solid var(--bg-3);
         color: var(--txt-1);
     }
     .group textarea {
-        width: 100%;
-        padding: 0.5rem;
-        background: var(--bg-2);
-        border: 2px solid var(--bg-3);
         resize: vertical;
         font-family: var(--font-family);
         font-size: 0.875rem;
@@ -1014,12 +1252,20 @@
     .links-header {
         display: flex;
         justify-content: space-between;
+
+        .setting-label {
+            margin: 0;
+        }
+    }
+    .links-list {
+        display: flex;
+        flex-direction: column;
     }
     .add-btn {
         height: 1.5rem;
     }
     .drop-zone {
-        height: 0.25rem;
+        height: 0.5rem;
         margin: 0;
         position: relative;
     }
@@ -1037,7 +1283,7 @@
         display: flex;
         align-items: center;
         margin-bottom: 0;
-        border: 2px solid transparent;
+        /*border: 2px solid transparent;*/
     }
     .link.dragging {
         opacity: 0.5;
@@ -1053,14 +1299,45 @@
     .drag-handle:active {
         cursor: grabbing;
     }
-    .link .link-input.name {
-        width: 10rem;
+    .icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
         margin-right: 0.5rem;
+        border: 2px solid var(--bg-3);
+        background: var(--bg-2);
+        color: var(--txt-2);
+        flex-shrink: 0;
+    }
+    .icon-btn:hover {
+        border-color: var(--txt-3);
+        color: var(--txt-1);
+    }
+    .icon-placeholder {
+        color: var(--txt-3);
+        font-size: 0.875rem;
+    }
+    .link .link-input.name {
+        width: 6rem;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+    .link .link-input.url {
+        flex: 1;
+        min-width: 0;
+        margin-right: 0.5rem;
+    }
+    .link .link-input.hotkey {
+        width: 2rem;
+        text-align: center;
+        flex-shrink: 0;
     }
     .remove-btn {
         padding: 0 0.25rem 0 0.5rem;
         font-size: 1.125rem;
-        font-weight: 300;
+        font-weight: var(--font-weight-light);
     }
     .settings-actions {
         display: flex;
@@ -1076,6 +1353,9 @@
     button:hover .bracket,
     a:hover .bracket {
         color: var(--txt-2);
+    }
+    button.bottom {
+        margin-top: 0.5rem;
     }
     .version {
         color: var(--txt-3);
@@ -1103,7 +1383,6 @@
         height: 1rem;
     }
     .theme-name {
-        font-size: 0.9rem;
         flex: 1;
     }
     .radio-group,
@@ -1168,5 +1447,51 @@
     }
     .loading {
         color: var(--txt-3);
+    }
+    .checkbox-group {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+    .custom-colors-grid {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(4, auto);
+        grid-auto-flow: column;
+        gap: 0.5rem 1rem;
+    }
+    .color-input-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        label {
+            color: var(--txt-2);
+            width: 3.25rem;
+            flex-shrink: 0;
+        }
+    }
+    input[type='color'] {
+        width: 1.25rem;
+        height: 1.25rem;
+        padding: 0;
+        border: 2px solid var(--bg-3);
+        background: none;
+        cursor: pointer;
+        flex-shrink: 0;
+
+        &::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        &::-webkit-color-swatch {
+            border: none;
+        }
+        &::-moz-color-swatch {
+            border: none;
+        }
+    }
+    input[type='text'].color-text {
+        font-size: 0.875rem;
+        color: inherit;
     }
 </style>

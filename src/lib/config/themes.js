@@ -91,6 +91,10 @@ export const themes = {
             text: '#657b83',
         },
     },
+    custom: {
+        displayName: 'custom',
+        preview: null, // preview comes from settings.customThemeColors
+    },
 }
 
 export const themeNames = Object.keys(themes)

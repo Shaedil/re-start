@@ -2,7 +2,7 @@
     import '@fontsource-variable/geist-mono'
     import 'virtual:simple-icons.css'
     import { settings } from './lib/stores/settings-store.svelte.js'
-    import { defaultTheme } from './lib/config/themes.js'
+    import { defaultTheme, defaultCustomColors } from './lib/config/themes.js'
     import Calendar from './lib/components/Calendar.svelte'
     import Clock from './lib/components/Clock.svelte'
     import Links from './lib/components/Links.svelte'
@@ -89,6 +89,21 @@
         if (link) link.href = 'data:image/svg+xml,' + encodeURIComponent(svg)
     }
 
+    function applyCustomThemeColors(colors) {
+        let styleEl = document.getElementById('custom-theme-vars')
+        if (!styleEl) {
+            styleEl = document.createElement('style')
+            styleEl.id = 'custom-theme-vars'
+            document.head.appendChild(styleEl)
+        }
+        const c = colors || defaultCustomColors
+        styleEl.textContent = `:root.theme-custom {
+            --bg-1: ${c.bg1}; --bg-2: ${c.bg2}; --bg-3: ${c.bg3};
+            --txt-1: ${c.txt1}; --txt-2: ${c.txt2}; --txt-3: ${c.txt3};
+            --txt-4: ${c.txt4}; --txt-err: ${c.txtErr};
+        }`
+    }
+
     // Google Fonts that can be loaded dynamically
     const googleFonts = {
         'JetBrains Mono': 'JetBrains+Mono',
@@ -134,6 +149,11 @@
 
     $effect(() => {
         applyTheme(settings.currentTheme)
+        updateFavicon()
+    })
+
+    $effect(() => {
+        applyCustomThemeColors(settings.customThemeColors)
         updateFavicon()
     })
 
