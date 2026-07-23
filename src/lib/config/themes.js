@@ -236,6 +236,13 @@ export const defaultCustomColors = {
     txt3: '#636363',
     txt4: '#484848',
     txtErr: '#d6809c',
+    // Accent colors (default to the monochrome default theme; users can recolor)
+    txtNum: '#dedede',
+    txtLink: '#aeaeae',
+    txtGreen: '#aeaeae',
+    txtViolet: '#636363',
+    txtOrange: '#dedede',
+    txtMagenta: '#636363',
 }
 
 export const defaultTheme = 'default'

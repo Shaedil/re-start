@@ -169,8 +169,10 @@ function loadSettings() {
         if (stored) {
             const parsed = JSON.parse(stored)
             const merged = { ...defaultSettings, ...parsed }
-            if (!merged.customThemeColors) {
-                merged.customThemeColors = { ...defaultCustomColors }
+            // Backfill any missing custom color keys (e.g. newly added accent colors)
+            merged.customThemeColors = {
+                ...defaultCustomColors,
+                ...(merged.customThemeColors || {}),
             }
             // migrate old showLinkIcons boolean to linkIconMode
             if ('showLinkIcons' in parsed) {

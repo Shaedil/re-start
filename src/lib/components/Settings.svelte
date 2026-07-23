@@ -310,6 +310,12 @@
         { key: 'txt2', label: 'txt 2' },
         { key: 'txt1', label: 'txt 1' },
         { key: 'txtErr', label: 'error' },
+        { key: 'txtNum', label: 'num' },
+        { key: 'txtLink', label: 'link' },
+        { key: 'txtGreen', label: 'green' },
+        { key: 'txtViolet', label: 'violet' },
+        { key: 'txtOrange', label: 'orange' },
+        { key: 'txtMagenta', label: 'magenta' },
     ]
 
     // Drag and drop state
@@ -1456,7 +1462,7 @@
         margin-top: 1rem;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        grid-template-rows: repeat(4, auto);
+        grid-template-rows: repeat(7, auto);
         grid-auto-flow: column;
         gap: 0.5rem 1rem;
     }

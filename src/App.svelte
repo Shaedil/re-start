@@ -96,11 +96,13 @@
             styleEl.id = 'custom-theme-vars'
             document.head.appendChild(styleEl)
         }
-        const c = colors || defaultCustomColors
+        const c = { ...defaultCustomColors, ...(colors || {}) }
         styleEl.textContent = `:root.theme-custom {
             --bg-1: ${c.bg1}; --bg-2: ${c.bg2}; --bg-3: ${c.bg3};
             --txt-1: ${c.txt1}; --txt-2: ${c.txt2}; --txt-3: ${c.txt3};
             --txt-4: ${c.txt4}; --txt-err: ${c.txtErr};
+            --txt-num: ${c.txtNum}; --txt-link: ${c.txtLink}; --txt-green: ${c.txtGreen};
+            --txt-violet: ${c.txtViolet}; --txt-orange: ${c.txtOrange}; --txt-magenta: ${c.txtMagenta};
         }`
     }
 
