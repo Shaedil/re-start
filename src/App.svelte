@@ -1,5 +1,6 @@
 <script>
     import '@fontsource-variable/geist-mono'
+    import 'virtual:simple-icons.css'
     import { settings } from './lib/stores/settings-store.svelte.js'
     import { defaultTheme } from './lib/config/themes.js'
     import Calendar from './lib/components/Calendar.svelte'
@@ -14,6 +15,7 @@
     import Weather from './lib/components/Weather.svelte'
     import { saveSettings } from './lib/stores/settings-store.svelte.js'
     import { isChrome } from './lib/utils/browser-detect.js'
+    import iconSvg from '/public/icon.svg?raw'
 
     import { onMount, onDestroy } from 'svelte'
 
@@ -48,8 +50,43 @@
         showSettings = false
     }
 
+    function handleGlobalKeydown(event) {
+        if (showSettings) return
+        if (!settings.linkHotkeys) return
+        if (event.ctrlKey || event.altKey || event.metaKey) return
+
+        const target = event.target
+        const isTypingField =
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+
+        if (isTypingField) return
+
+        const link = settings.links.find((l) => l.hotkey === event.key)
+        if (link && link.url) {
+            event.preventDefault()
+            event.stopPropagation()
+
+            if (settings.linkTarget === '_blank') {
+                window.open(link.url, '_blank', 'noopener,noreferrer')
+            } else {
+                window.location.assign(link.url)
+            }
+        }
+    }
+
     function applyTheme(themeName) {
         document.documentElement.className = 'theme-' + (themeName || defaultTheme)
+    }
+
+    function updateFavicon() {
+        const style = getComputedStyle(document.documentElement)
+        const bg = style.getPropertyValue('--bg-1').trim() || '#141414'
+        const fg = style.getPropertyValue('--txt-2').trim() || '#aeaeae'
+        const svg = iconSvg.replace('#141414', bg).replace('#aeaeae', fg)
+        const link = document.querySelector('link[rel="icon"]')
+        if (link) link.href = 'data:image/svg+xml,' + encodeURIComponent(svg)
     }
 
     // Google Fonts that can be loaded dynamically
@@ -87,7 +124,17 @@
     })
 
     $effect(() => {
+        const w = Number(settings.fontWeight) || 400
+        document.documentElement.style.setProperty('--font-weight', String(w))
+        document.documentElement.style.setProperty(
+            '--font-weight-light',
+            String(Math.max(100, w - 100))
+        )
+    })
+
+    $effect(() => {
         applyTheme(settings.currentTheme)
+        updateFavicon()
     })
 
     $effect(() => {
@@ -108,6 +155,8 @@
         saveSettings(settings)
     })
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <main>
     <div class="container">

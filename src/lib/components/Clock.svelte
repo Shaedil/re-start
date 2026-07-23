@@ -90,7 +90,9 @@
     <div class="panel">
         <div class="greeting">{greeting}</div>
         <div class="clock">
-            {currentHrs}<span class="colon">:</span>{currentMin}
+            {currentHrs}<span class="colon">:</span>{currentMin}{#if settings.showSeconds}<span
+                    class="colon">:</span
+                >{currentSec}{/if}
             {#if settings.timeFormat === '12hr'}
                 <span class="ampm">{currentAmPm}</span>
             {/if}
@@ -110,7 +112,7 @@
     }
     .clock {
         font-size: 3.125rem;
-        font-weight: 300;
+        font-weight: var(--font-weight-light);
         color: var(--txt-num);
         line-height: 3.5rem;
         margin: 0 0 0.5rem 0;
