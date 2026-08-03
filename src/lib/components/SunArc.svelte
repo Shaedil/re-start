@@ -19,6 +19,8 @@
     const DEG = 0.62
     // Only used to find the peak altitude over the span, not to shape the line.
     const SAMPLES = 25
+    // Integration steps for the arc-length conversion below.
+    const ARC_STEPS = 120
     const VIEWBOX = `0 0 ${WIDTH} 96`
 
     const TICK_MS = 60000
@@ -59,6 +61,24 @@
     function domeHeight(fraction) {
         const offset = 2 * clamp01(fraction) - 1
         return Math.sqrt(Math.max(0, 1 - offset * offset))
+    }
+
+    // The dome as (cx + a*cos t, HORIZON - b*sin t), so the parameter angle t
+    // runs from PI at the left end to 0 at the right. This is its length per
+    // radian of t; stepping in t rather than in x keeps the integral away from
+    // the vertical tangents at the two ends.
+    function domeSpeed(t, a, b) {
+        return Math.hypot(a * Math.sin(t), b * Math.cos(t))
+    }
+
+    // Midpoint-rule arc length between two parameter angles.
+    function domeArcLength(from, to, a, b) {
+        const step = (to - from) / ARC_STEPS
+        let sum = 0
+        for (let i = 0; i < ARC_STEPS; i++) {
+            sum += domeSpeed(from + step * (i + 0.5), a, b)
+        }
+        return sum * step
     }
 
     let now = $state(new Date())
@@ -158,6 +178,21 @@
     // x is linear in time so the marker tracks the clock; y puts it on the dome.
     let markerX = $derived(LEFT + (RIGHT - LEFT) * progress)
     let markerY = $derived(HORIZON - arcHeight * domeHeight(progress))
+
+    // The traveled stroke is dashed off by *length* along the arc, but the
+    // marker sits at a fraction of the *width*. On an ellipse those two advance
+    // at different rates -- the ends are steep, so length runs ahead of width
+    // past the midpoint -- and dashing at `progress` directly left the stroke
+    // visibly out in front of the sun. So convert: how much of the arc's length
+    // lies to the left of the marker.
+    let traveledLength = $derived.by(() => {
+        const radius = (RIGHT - LEFT) / 2
+        if (arcHeight <= 0) return progress
+        const total = domeArcLength(0, Math.PI, radius, arcHeight)
+        if (total <= 0) return progress
+        const t = Math.acos(2 * clamp01(progress) - 1)
+        return clamp01(domeArcLength(t, Math.PI, radius, arcHeight) / total)
+    })
 
     // The arc always runs left to right through the active phase, so at night
     // the left end is the sunset it began at and the right end is the sunrise
@@ -337,7 +372,7 @@
                 class="traveled"
                 d={arcPath}
                 pathLength="1"
-                stroke-dasharray="{progress} 1"
+                stroke-dasharray="{traveledLength} 1"
             />
 
             <circle class="glow" cx={markerX} cy={markerY} r="8.5" />

@@ -290,10 +290,11 @@
     }
     .event-title {
         font-weight: bold;
+        /* Wrap at 30 characters (monospace, so 1ch = 1 char) so a long title
+           costs extra lines instead of stretching the whole widget. */
         display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        max-width: 30ch;
+        overflow-wrap: break-word;
     }
     .event-time {
         font-size: 0.7em;

@@ -102,7 +102,10 @@ a {
     text-decoration: none;
 }
 
-input {
+/* select is here with input so the two size identically: left to the browser
+   UI font, a select ends up a different height than the input beside it. */
+input,
+select {
     font: inherit;
     color: inherit;
     outline: none;

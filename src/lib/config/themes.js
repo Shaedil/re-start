@@ -201,7 +201,53 @@ export const themes = {
     },
 }
 
-export const themeNames = Object.keys(themes)
+// Light counterparts, keyed by the dark theme each one pairs with. Not
+// derivable from the names: rosé pine's light variant is "dawn" and
+// catppuccin's is "latte". A colourscheme shipping only a dark variant simply
+// has no entry here.
+const lightVariants = {
+    'catppuccin-mocha': 'catppuccin-latte',
+    everforest: 'everforest-light',
+    gruvbox: 'gruvbox-light',
+    'one-dark': 'one-light',
+    'rose-pine': 'rose-pine-dawn',
+    'solarized-dark': 'solarized-light',
+}
+
+// Two columns of [left, right], a-z down the left. A theme with a light variant
+// takes a whole row so the pair reads across, and the themes with no light
+// variant pack into the cells that would otherwise be blank, keeping the section
+// as short as two columns allow. `custom` is pinned to the last row because it
+// is an editor rather than a colourscheme. Adding a theme needs no change here
+// beyond a lightVariants entry if it has a counterpart.
+export const themeRows = (() => {
+    const lights = new Set(Object.values(lightVariants))
+    const byDisplayName = (a, b) =>
+        themes[a].displayName.localeCompare(themes[b].displayName)
+
+    // Every theme that is not itself a light variant, a-z.
+    const darks = Object.keys(themes)
+        .filter(name => name !== 'custom' && !lights.has(name))
+        .sort(byDisplayName)
+    const unpaired = darks.filter(name => !lightVariants[name])
+
+    const rows = []
+    const placed = new Set()
+    for (const dark of darks) {
+        if (placed.has(dark)) continue
+        placed.add(dark)
+        if (lightVariants[dark]) {
+            rows.push([dark, lightVariants[dark]])
+            continue
+        }
+        // Fill the free cell with the next unplaced theme that has no light
+        // variant of its own, so rows stay full instead of running ragged.
+        const filler = unpaired.find(name => !placed.has(name))
+        if (filler) placed.add(filler)
+        rows.push([dark, filler ?? null])
+    }
+    return [...rows, ['custom', null]]
+})()
 
 export const defaultCustomColors = {
     bg1: '#141414',

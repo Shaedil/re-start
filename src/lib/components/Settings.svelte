@@ -7,7 +7,7 @@
         resetSettings,
     } from '../stores/settings-store.svelte.js'
     import {
-        themeNames,
+        themeRows,
         themes,
         defaultCustomColors,
     } from '../config/themes.js'
@@ -25,6 +25,28 @@
 
     let { showSettings = false, closeSettings } = $props()
     const prevDomains = new WeakMap()
+
+    const STANDARD_FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900]
+
+    // A weight saved from the old free-entry number field need not be one of the
+    // nine standard steps, and dropping it from the list would leave the select
+    // showing nothing and silently reset the setting on the next change.
+    let fontWeights = $derived.by(() => {
+        const current = Number(settings.fontWeight)
+        if (!Number.isFinite(current) || STANDARD_FONT_WEIGHTS.includes(current)) {
+            return STANDARD_FONT_WEIGHTS
+        }
+        return [...STANDARD_FONT_WEIGHTS, current].sort((a, b) => a - b)
+    })
+
+    // The select binds by identity, so a weight left empty or stored as a string
+    // by the old number field would match no option. App.svelte already renders
+    // those as 400; make the stored value say so.
+    $effect(() => {
+        const current = Number(settings.fontWeight)
+        if (!Number.isFinite(current)) settings.fontWeight = 400
+        else if (settings.fontWeight !== current) settings.fontWeight = current
+    })
 
     // Check if Google Tasks is available (Chrome only)
     const googleTasksAvailable = isChrome()
@@ -459,56 +481,65 @@
         <div class="content">
             <div class="group">
                 <div class="setting-label">widgets</div>
-                <div class="checkbox-group">
+                <!-- One wrapping row, not hand-split ones: fixed rows orphaned
+                     whichever toggle happened to land past the panel edge. -->
+                <div class="checkbox-group widget-toggles">
                     <Checkbox bind:checked={settings.showClock}>datetime</Checkbox>
                     <Checkbox bind:checked={settings.showStats}>stats</Checkbox>
                     <Checkbox bind:checked={settings.showWeather}>weather</Checkbox>
                     <Checkbox bind:checked={settings.showTasks}>tasks</Checkbox>
                     <Checkbox bind:checked={settings.showPomodoro}>pomodoro</Checkbox>
-                </div>
-                <div class="checkbox-group" style="margin-top: 0.5rem;">
                     <Checkbox bind:checked={settings.showQuote}>quote</Checkbox>
                     <Checkbox bind:checked={settings.showNotes}>notes</Checkbox>
                     <Checkbox bind:checked={settings.showLinks}>links</Checkbox>
                     <Checkbox bind:checked={settings.showCalendar}>calendar</Checkbox>
-                </div>
-                <div class="checkbox-group" style="margin-top: 0.5rem;">
                     <Checkbox bind:checked={settings.showDaylightArc}>daylight arc</Checkbox>
                 </div>
             </div>
             <div class="group">
                 <div class="setting-label">theme</div>
-                <div class="theme-grid">
-                    {#each themeNames as themeName}
-                        <div class="theme-option">
-                            <RadioButton
-                                bind:group={settings.currentTheme}
-                                value={themeName}
+                {#snippet themeOption(themeName)}
+                    <div class="theme-option">
+                        <RadioButton
+                            bind:group={settings.currentTheme}
+                            value={themeName}
+                        >
+                            {#if themeName !== 'custom'}
+                                <div class="theme-preview">
+                                    <div
+                                        style="background-color: {themes[
+                                            themeName
+                                        ].preview.bg}"
+                                    ></div>
+                                    <div
+                                        style="background-color: {themes[
+                                            themeName
+                                        ].preview.accent}"
+                                    ></div>
+                                    <div
+                                        style="background-color: {themes[
+                                            themeName
+                                        ].preview.text}"
+                                    ></div>
+                                </div>
+                            {/if}
+                            <span class="theme-name"
+                                >{themes[themeName].displayName}</span
                             >
-                                {#if themeName !== 'custom'}
-                                    <div class="theme-preview">
-                                        <div
-                                            style="background-color: {themes[
-                                                themeName
-                                            ].preview.bg}"
-                                        ></div>
-                                        <div
-                                            style="background-color: {themes[
-                                                themeName
-                                            ].preview.accent}"
-                                        ></div>
-                                        <div
-                                            style="background-color: {themes[
-                                                themeName
-                                            ].preview.text}"
-                                        ></div>
-                                    </div>
-                                {/if}
-                                <span class="theme-name"
-                                    >{themes[themeName].displayName}</span
-                                >
-                            </RadioButton>
-                        </div>
+                        </RadioButton>
+                    </div>
+                {/snippet}
+                <!-- Rows come pre-paired from themeRows so a colourscheme and
+                     its light variant stay side by side; see the comment there
+                     for how the unpaired ones are packed in. -->
+                <div class="theme-grid">
+                    {#each themeRows as [dark, light] (dark)}
+                        {@render themeOption(dark)}
+                        {#if light}
+                            {@render themeOption(light)}
+                        {:else}
+                            <div></div>
+                        {/if}
                     {/each}
                 </div>
                 {#if settings.currentTheme === 'custom'}
@@ -584,14 +615,11 @@
                     </div>
                     <div class="col font-weight-col">
                         <label for="font-weight">weight</label>
-                        <input
-                            id="font-weight"
-                            type="number"
-                            bind:value={settings.fontWeight}
-                            min="1"
-                            max="1000"
-                            placeholder="400"
-                        />
+                        <select id="font-weight" bind:value={settings.fontWeight}>
+                            {#each fontWeights as weight}
+                                <option value={weight}>{weight}</option>
+                            {/each}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -1219,8 +1247,9 @@
     .col {
         flex: 1;
     }
+    /* Wide enough for three digits plus the dropdown chevron. */
     .font-weight-col {
-        flex: 0 0 5rem;
+        flex: 0 0 7rem;
     }
     .group {
         flex: 1;
@@ -1397,7 +1426,12 @@
     .radio-group,
     .checkbox-group {
         display: flex;
-        gap: 3ch;
+        flex-wrap: wrap;
+        gap: 0.5rem 3ch;
+    }
+    /* Ten toggles, so a narrower column gap to fit them in fewer rows. */
+    .widget-toggles {
+        column-gap: 2ch;
     }
     .calendar-auth {
         display: flex;
@@ -1456,10 +1490,6 @@
     }
     .loading {
         color: var(--txt-3);
-    }
-    .checkbox-group {
-        flex-wrap: wrap;
-        row-gap: 0.5rem;
     }
     .custom-colors-grid {
         margin-top: 1rem;
