@@ -64,6 +64,8 @@ button {
 .panel-wrapper {
     position: relative;
     min-width: 0;
+    /* Lets a capped row squeeze the panel instead of overflowing the page. */
+    min-height: 0;
     display: flex;
 }
 

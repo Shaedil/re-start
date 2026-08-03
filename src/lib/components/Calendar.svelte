@@ -244,7 +244,9 @@
         max-width: 40rem;
     }
     .panel {
+        /* Preferred size, but yields when the row is capped. */
         height: 21.25rem;
+        max-height: 100%;
         overflow-y: auto;
         scrollbar-width: none;
     }

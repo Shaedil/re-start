@@ -236,22 +236,43 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        /* Capped so the page itself never scrolls; the widgets row below gives
+           up height instead and its panels scroll internally. */
+        max-height: 100vh;
         justify-content: center;
         align-items: center;
-        padding: 2rem 1rem;
+        padding: 1.5rem 1rem;
+        /* Safety valve: if the window is so short that even a collapsed
+           widgets row cannot fit, scroll rather than clip content away. */
+        overflow-y: auto;
     }
     .container {
-        display: grid;
-        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        max-width: 100%;
+        /* min-height:0 all the way down, or flex children refuse to shrink
+           below their content and the cap above does nothing. */
+        min-height: 0;
+    }
+    /* Only the widgets row gives up height; these have no internal scroll of
+       their own, so shrinking them just clips their contents. */
+    .container > :global(.panel-wrapper) {
+        flex-shrink: 0;
     }
     .top {
         display: flex;
-        gap: 1.5rem;
+        gap: 1.25rem;
+        flex-shrink: 0;
     }
     .widgets {
         display: flex;
-        gap: 1.5rem;
+        gap: 1.25rem;
         width: 100%;
+        /* Overrides the flex default of min-height:auto so the row can shrink,
+           but keeps a floor: collapsing to nothing would hide the widgets
+           entirely rather than letting them scroll. */
+        min-height: 5rem;
     }
     .settings-btn {
         position: fixed;

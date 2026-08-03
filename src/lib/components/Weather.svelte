@@ -280,6 +280,16 @@
     .panel-wrapper.expand {
         flex-grow: 1;
     }
+    /* This panel has the tallest natural content of the row, so it is the one
+       that has to give when the viewport is short. */
+    .panel {
+        max-height: 100%;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .panel::-webkit-scrollbar {
+        display: none;
+    }
     .temp {
         font-size: 2rem;
         font-weight: var(--font-weight-light);
@@ -321,7 +331,7 @@
     }
     .forecast-weather {
         color: var(--txt-3);
-        font-size: 1.35rem;
+        font-size: 1.1rem;
         /* Pin the row height so the icon column keeps step with the time and
            temperature columns beside it. */
         line-height: 1.5rem;
