@@ -85,7 +85,7 @@
 </script>
 
 <form class:show onsubmit={handleSubmit}>
-    <span class="dark">+</span>
+    <span class="prefix">+</span>
     <div class="input-shell">
         <div
             class="input-overlay"
@@ -151,14 +151,17 @@
         color: var(--txt-2);
         line-height: 1.5;
     }
+    .prefix {
+        color: var(--txt-green);
+    }
     .placeholder {
         color: var(--txt-3);
     }
     .date-highlight {
-        color: var(--txt-3);
+        color: var(--txt-orange);
     }
     .project-highlight {
-        color: var(--txt-3);
+        color: var(--txt-violet);
     }
     .add-task-input {
         flex: 1;

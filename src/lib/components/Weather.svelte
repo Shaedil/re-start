@@ -12,6 +12,8 @@
     let offline = $state(false)
     let initialLoad = $state(true)
     let prevForecastMode = $state(settings.forecastMode)
+    // Plain let, not $state: only ever compared inside the effect that sets it.
+    let prevFetchKey = null
 
     const weatherAPI = new WeatherAPI()
     const AUTO_REFRESH_KEY = 'weather_auto_refresh_time'
@@ -50,11 +52,20 @@
         const timeFormat = settings.timeFormat
         const forecastMode = settings.forecastMode
 
+        // Only these change what the API would return. Time format is purely
+        // presentational and is reapplied when the cached payload is
+        // reprocessed, so it must not cost a network round trip.
+        const fetchKey = `${lat}|${lon}|${locationMode}|${tempUnit}|${speedUnit}|${forecastMode}`
+
         if (untrack(() => initialLoad)) {
             initialLoad = false
             prevForecastMode = forecastMode
+            prevFetchKey = fetchKey
             return
         }
+
+        const needsFetch = prevFetchKey !== fetchKey
+        prevFetchKey = fetchKey
 
         // Clear cache if forecast mode changed
         if (untrack(() => prevForecastMode) !== forecastMode) {
@@ -62,7 +73,12 @@
             weatherAPI.clearCache()
         }
 
-        refreshWeather()
+        if (needsFetch) {
+            refreshWeather()
+        } else {
+            // Re-render from cache; loadWeather returns early while it is fresh.
+            loadWeather()
+        }
     })
 
     async function getCurrentLocation() {
@@ -198,24 +214,24 @@
             <div class="stats">
                 <div class="col">
                     <div>
-                        humi <span class="bright"
+                        humi <span class="stat-humi"
                             >{current.relative_humidity_2m}%</span
                         >
                     </div>
                     <div>
-                        rain <span class="bright"
+                        rain <span class="stat-rain"
                             >{current.precipitation_probability}%</span
                         >
                     </div>
                 </div>
                 <div class="col">
                     <div>
-                        wind <span class="bright"
+                        wind <span class="stat-wind"
                             >{current.wind_speed_10m} {settings.speedUnit}</span
                         >
                     </div>
                     <div>
-                        feel <span class="bright"
+                        feel <span class="stat-feel"
                             >{current.apparent_temperature}°{settings.tempUnit[0].toUpperCase()}</span
                         >
                     </div>
@@ -272,11 +288,22 @@
     }
     .description {
         font-size: 1.25rem;
-        color: var(--txt-3);
+        color: var(--txt-link);
     }
     .stats {
         display: flex;
         gap: 1.5rem;
+        color: var(--txt-3);
+    }
+    .stat-humi,
+    .stat-rain {
+        color: var(--txt-link);
+    }
+    .stat-wind {
+        color: var(--txt-green);
+    }
+    .stat-feel {
+        color: var(--txt-orange);
     }
     .forecast {
         display: flex;
@@ -294,5 +321,10 @@
     }
     .forecast-weather {
         color: var(--txt-3);
+        font-size: 1.35rem;
+        /* Pin the row height so the icon column keeps step with the time and
+           temperature columns beside it. */
+        line-height: 1.5rem;
+        text-align: center;
     }
 </style>

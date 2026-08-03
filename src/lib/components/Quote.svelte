@@ -68,7 +68,7 @@
     }
     .quote-author {
         font-size: 0.875rem;
-        color: var(--txt-3);
+        color: var(--txt-magenta);
     }
     .quote-loading {
         color: var(--txt-3);

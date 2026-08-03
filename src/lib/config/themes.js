@@ -139,14 +139,6 @@ export const themes = {
             text: '#c9d1d9',
         },
     },
-    'github-light': {
-        displayName: 'github light',
-        preview: {
-            bg: '#ffffff',
-            accent: '#0969da',
-            text: '#24292f',
-        },
-    },
     'material-palenight': {
         displayName: 'material palenight',
         preview: {
@@ -187,14 +179,6 @@ export const themes = {
             text: '#575279',
         },
     },
-    'tokyo-night-day': {
-        displayName: 'tokyo night day',
-        preview: {
-            bg: '#e1e2e7',
-            accent: '#2e7de9',
-            text: '#3760bf',
-        },
-    },
     'everforest-light': {
         displayName: 'everforest light',
         preview: {
@@ -209,14 +193,6 @@ export const themes = {
             bg: '#fafafa',
             accent: '#4078f2',
             text: '#383a42',
-        },
-    },
-    'ayu-light': {
-        displayName: 'ayu light',
-        preview: {
-            bg: '#fcfcfc',
-            accent: '#fa8d3e',
-            text: '#5c6166',
         },
     },
     custom: {

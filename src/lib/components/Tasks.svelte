@@ -43,6 +43,7 @@
     let isRevealed = $derived(isHovered || isFocused)
     let taskCount = $derived(tasks.filter((task) => !task.checked).length)
     let taskLabel = $derived(taskCount === 1 ? 'task' : 'tasks')
+    let completedCount = $derived(tasks.filter((task) => task.checked).length)
     let backendUrl = $derived.by(() => {
         if (settings.taskBackend === 'todoist')
             return 'https://app.todoist.com/app'
@@ -413,6 +414,23 @@
         return task.due_date.getTime() < now.getTime()
     }
 
+    function isTaskDueSoon(task) {
+        if (!task.due || task.checked || isTaskOverdue(task)) return false
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const dueDate = task.due_date
+        const dueDateOnly = new Date(
+            dueDate.getFullYear(),
+            dueDate.getMonth(),
+            dueDate.getDate()
+        )
+        const msPerDay = 1000 * 60 * 60 * 24
+        const diffDays = Math.ceil(
+            (dueDateOnly.getTime() - today.getTime()) / msPerDay
+        )
+        return diffDays === 0 || diffDays === 1
+    }
+
     function formatDueDate(date, hasTime) {
         if (!date) return ''
 
@@ -504,13 +522,19 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <span class="bright">{taskCount}</span>
-                            {taskLabel}
+                            <span class="task-count">{taskCount}</span>
+                            {taskLabel}{#if completedCount > 0}<span
+                                    class="completed-count"
+                                    >, {completedCount} completed</span
+                                >{/if}
                         </a>
                     {:else}
                         <span>
-                            <span class="bright">{taskCount}</span>
-                            {taskLabel}
+                            <span class="task-count">{taskCount}</span>
+                            {taskLabel}{#if completedCount > 0}<span
+                                    class="completed-count"
+                                    >, {completedCount} completed</span
+                                >{/if}
                         </span>
                     {/if}
                     <AddTask
@@ -572,6 +596,7 @@
                                 {#if task.due_date}
                                     <span
                                         class="task-due"
+                                        class:due-soon={isTaskDueSoon(task)}
                                         class:overdue={isTaskOverdue(task)}
                                     >
                                         {formatDueDate(
@@ -653,11 +678,18 @@
         margin-left: 3ch;
     }
     .task-project {
-        color: var(--txt-3);
+        color: var(--txt-violet);
+    }
+    .task-count {
+        color: var(--txt-num);
+    }
+    .completed-count {
+        color: var(--txt-green);
     }
     .task-delete {
         opacity: 0;
         pointer-events: none;
+        color: var(--txt-err);
     }
     .task:hover .task-delete,
     .task:focus-within .task-delete {
@@ -666,6 +698,10 @@
     }
     .task.completed .task-title-input {
         text-decoration: line-through;
+        color: var(--txt-3);
+    }
+    .due-soon {
+        color: var(--txt-orange);
     }
     .overdue {
         color: var(--txt-err);
@@ -678,7 +714,7 @@
         flex-shrink: 0;
     }
     .checkbox-x {
-        color: var(--txt-2);
+        color: var(--txt-green);
     }
     .task-title-masked {
         position: absolute;

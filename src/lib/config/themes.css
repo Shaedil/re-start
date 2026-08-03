@@ -301,23 +301,6 @@
     --txt-magenta: #ff7b72;
 }
 
-.theme-github-light {
-    --bg-1: #ffffff;
-    --bg-2: #f6f8fa;
-    --bg-3: #eaeef2;
-    --txt-1: #1f2328;
-    --txt-2: #24292f;
-    --txt-3: #6e7781;
-    --txt-4: #0969da;
-    --txt-err: #cf222e;
-    --txt-num: #953800;
-    --txt-link: #0969da;
-    --txt-green: #1a7f37;
-    --txt-violet: #8250df;
-    --txt-orange: #bc4c00;
-    --txt-magenta: #bf3989;
-}
-
 .theme-material-palenight {
     --bg-1: #292d3e;
     --bg-2: #2f334a;
@@ -404,24 +387,6 @@
     --txt-magenta: #d7827e;
 }
 
-.theme-tokyo-night-day {
-    --bg-1: #e1e2e7;
-    --bg-2: #e9e9ed;
-    --bg-3: #c4c8da;
-    --txt-1: #3760bf;
-    --txt-2: #6172b0;
-    --txt-3: #848cb5;
-    --txt-4: #2e7de9;
-    --txt-err: #f52a65;
-    /* Tokyo Night Day accent colors */
-    --txt-num: #8c6c3e;
-    --txt-link: #2e7de9;
-    --txt-green: #587539;
-    --txt-violet: #9854f1;
-    --txt-orange: #b15c00;
-    --txt-magenta: #007197;
-}
-
 .theme-everforest-light {
     --bg-1: #fdf6e3;
     --bg-2: #f4f0d9;
@@ -458,20 +423,3 @@
     --txt-magenta: #0184bc;
 }
 
-.theme-ayu-light {
-    --bg-1: #fcfcfc;
-    --bg-2: #f3f4f5;
-    --bg-3: #e7e8e9;
-    --txt-1: #5c6166;
-    --txt-2: #787b80;
-    --txt-3: #abb0b6;
-    --txt-4: #fa8d3e;
-    --txt-err: #f07171;
-    /* Ayu Light accent colors */
-    --txt-num: #f2ae49;
-    --txt-link: #399ee6;
-    --txt-green: #86b300;
-    --txt-violet: #a37acc;
-    --txt-orange: #fa8d3e;
-    --txt-magenta: #e6ba7e;
-}

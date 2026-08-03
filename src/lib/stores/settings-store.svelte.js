@@ -1,4 +1,4 @@
-import { defaultCustomColors } from '../config/themes.js'
+import { defaultCustomColors, themes, defaultTheme } from '../config/themes.js'
 
 function detectFormatPreferences() {
     try {
@@ -143,6 +143,7 @@ let defaultSettings = {
     showNotes: false,
     showQuote: false,
     showCalendar: false,
+    showDaylightArc: true,
     blurWidgets: true,
     // Task completion celebration
     taskCelebration: true,
@@ -179,6 +180,11 @@ function loadSettings() {
                 merged.linkIconMode =
                     parsed.showLinkIcons === false ? 'arrow' : 'icons'
                 delete merged.showLinkIcons
+            }
+            // fall back when the saved theme has since been removed, otherwise
+            // the root class matches no rules and every variable goes unset
+            if (merged.currentTheme && !(merged.currentTheme in themes)) {
+                merged.currentTheme = defaultTheme
             }
             // migrate links to add hotkey field
             if (merged.links) {

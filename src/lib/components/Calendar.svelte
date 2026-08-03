@@ -10,7 +10,7 @@
     let error = $state(null)
     let calendarColorCache = $state({})
 
-    const DAYS_AHEAD = 3
+    const DAYS_AHEAD = 5
     const CACHE_KEY = 'calendarEventsCache'
 
     function getCachedEvents() {
@@ -19,7 +19,9 @@
             if (!raw) return null
             const cached = JSON.parse(raw)
             const today = new Date().toLocaleDateString('en-CA')
-            if (cached.date === today) return cached.events
+            // Cached events only cover the range they were fetched for, so a
+            // shorter cached span can't satisfy a longer one.
+            if (cached.date === today && cached.daysAhead === DAYS_AHEAD) return cached.events
         } catch {}
         return null
     }
@@ -27,7 +29,10 @@
     function setCachedEvents(eventData) {
         try {
             const today = new Date().toLocaleDateString('en-CA')
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, events: eventData }))
+            localStorage.setItem(
+                CACHE_KEY,
+                JSON.stringify({ date: today, daysAhead: DAYS_AHEAD, events: eventData })
+            )
         } catch {}
     }
 
@@ -130,7 +135,7 @@
                 )
             }
 
-            // Fetch events for the next 3 days
+            // Fetch events for the next DAYS_AHEAD days
             events = await backend.getTodayEvents(accessToken, calendarIds, calendarColorCache, DAYS_AHEAD)
             setCachedEvents(events)
         } catch (err) {
@@ -267,7 +272,9 @@
         gap: 0.25rem;
     }
     .day-label {
-        color: var(--txt-3);
+        /* Not violet: that is the panel-label colour, and the two sit close
+           enough together to read as the same kind of thing. */
+        color: var(--txt-orange);
         font-size: 0.85em;
     }
     .event-card {

@@ -472,6 +472,9 @@
                     <Checkbox bind:checked={settings.showLinks}>links</Checkbox>
                     <Checkbox bind:checked={settings.showCalendar}>calendar</Checkbox>
                 </div>
+                <div class="checkbox-group" style="margin-top: 0.5rem;">
+                    <Checkbox bind:checked={settings.showDaylightArc}>daylight arc</Checkbox>
+                </div>
             </div>
             <div class="group">
                 <div class="setting-label">theme</div>
