@@ -6,21 +6,25 @@
         getSolarAltitude,
         formatDuration,
     } from '../utils/sun-position.js'
-    import { getMoonPosition } from '../utils/moon-position.js'
 
-    // A symmetric half-ellipse spanning the active phase. The shape is fixed;
-    // the height is real, tracking the peak altitude the sun or moon reaches
-    // over the span, so summer arcs tower over winter ones.
+    // A symmetric circular arc spanning the active phase, and the same arc all
+    // round the clock: the height rides on how high the sun climbs that day, so
+    // summer arcs tower over winter ones and the night is the day's arc walked
+    // a second time in the dark.
     const WIDTH = 240
     const LEFT = 14
     const RIGHT = 226
     const HORIZON = 70
-    // Vertical scale: degrees of altitude to viewBox units.
-    const DEG = 0.62
-    // Only used to find the peak altitude over the span, not to shape the line.
-    const SAMPLES = 25
-    // Integration steps for the arc-length conversion below.
-    const ARC_STEPS = 120
+    const HALF_WIDTH = (RIGHT - LEFT) / 2
+    // The dome's height in viewBox units, from a sun that never clears the
+    // horizon to one at the zenith. The floor is what keeps this reading as an
+    // arc at all: the winter sun barely rises up north, and a height taken
+    // straight from its altitude flattened the curve into a line there.
+    const MIN_HEIGHT = 22
+    const MAX_HEIGHT = 60
+    // Vertical scale: degrees of altitude to viewBox units, sized so the zenith
+    // lands on MAX_HEIGHT and the arc stays inside the sky band.
+    const DEG = (MAX_HEIGHT - MIN_HEIGHT) / 90
     const VIEWBOX = `0 0 ${WIDTH} 96`
 
     const TICK_MS = 60000
@@ -56,29 +60,17 @@
         return smoothstep(1 - Math.abs(value - center) / halfWidth, 0, 1)
     }
 
-    // Height of the arc at a given fraction across it. A half ellipse, so the
-    // curve is symmetric by construction and round at the top.
-    function domeHeight(fraction) {
-        const offset = 2 * clamp01(fraction) - 1
-        return Math.sqrt(Math.max(0, 1 - offset * offset))
+    // Horizontal offset from the middle of the span, in viewBox units.
+    function offsetAt(fraction) {
+        return (2 * clamp01(fraction) - 1) * HALF_WIDTH
     }
 
-    // The dome as (cx + a*cos t, HORIZON - b*sin t), so the parameter angle t
-    // runs from PI at the left end to 0 at the right. This is its length per
-    // radian of t; stepping in t rather than in x keeps the integral away from
-    // the vertical tangents at the two ends.
-    function domeSpeed(t, a, b) {
-        return Math.hypot(a * Math.sin(t), b * Math.cos(t))
-    }
-
-    // Midpoint-rule arc length between two parameter angles.
-    function domeArcLength(from, to, a, b) {
-        const step = (to - from) / ARC_STEPS
-        let sum = 0
-        for (let i = 0; i < ARC_STEPS; i++) {
-            sum += domeSpeed(from + step * (i + 0.5), a, b)
-        }
-        return sum * step
+    // How far the circle rises above the horizon at a given offset from the
+    // middle. The centre sits `radius - height` below the horizon, so this is
+    // the circle's own height there less that drop.
+    function arcRise(offset, radius, height) {
+        const span = Math.max(0, radius * radius - offset * offset)
+        return Math.sqrt(span) - (radius - height)
     }
 
     let now = $state(new Date())
@@ -134,64 +126,121 @@
     })
     let starOpacity = $derived(smoothstep(-altitude, 6, 16))
 
-    let isNight = $derived(altitude <= 0)
+    // Keyed to the span the arc is actually drawing, not to the sky. Those part
+    // ways for the four minutes between the sun reaching 0 degrees and true
+    // sunset at -0.833, and keying to altitude there put the widget in night
+    // dress while it was still tracking the daylight span -- violet marker, and
+    // an endpoint reading the sunrise time under a "sunset" label.
+    let isNight = $derived(
+        state?.phase === 'night' || state?.phase === 'polar-night'
+    )
     let progress = $derived(state?.progress ?? 0.5)
 
-    // One solar position per sample, but the shape only changes when the span
-    // does, so this must not recompute on every tick.
-    let curveCache = { key: '', peak: 0 }
+    // At the handover the marker teleports: the outgoing span ends at progress 1
+    // and the incoming one starts at 0, which is the far end of the arc. Letting
+    // it slide there reads as the sun running backwards through the whole day,
+    // so it instead sets below the horizon, crosses unseen, and rises again at
+    // the other end. These bounds are shared with the CSS keyframes below.
+    const HANDOFF_MS = 1700
+    // When the marker gives up its outgoing position, in the middle of the
+    // window where the keyframes hold it under the horizon at zero opacity.
+    const HANDOFF_SWAP_MS = 880
+    let handoff = $state(false)
+    // The outgoing progress, held until the swap so the jump happens unseen.
+    let heldProgress = $state(null)
+    let handoffTimer = null
+    let swapTimer = null
+    // Plain, not $state: the effect writes them, and reading them reactively
+    // would re-run the effect they were written from.
+    let lastPhaseWasNight = null
+    let lastProgress = 0
 
-    // The arc is a symmetric dome spanning the active phase. Its shape is fixed
-    // so it always reads as an arc; what stays real is its height, which is the
-    // peak altitude the body actually reaches over the span. Plotting altitude
-    // point by point was tried and rejected: by day it drew a straight-sided
-    // tent, and by night the moon often rises late and is still climbing at
-    // sunrise, so the curve ran off the edge instead of coming back down.
-    let peakAltitude = $derived.by(() => {
-        if (!coordinates || !state?.spanStart || !state?.spanEnd) return 0
-
-        const { latitude, longitude } = coordinates
-        const start = state.spanStart.valueOf()
-        const end = state.spanEnd.valueOf()
-        const body = isNight ? 'moon' : 'sun'
-        const key = `${start}|${end}|${latitude}|${longitude}|${body}`
-        if (curveCache.key === key) return curveCache.peak
-
-        let peak = 0
-        for (let i = 0; i < SAMPLES; i++) {
-            const at = new Date(start + ((end - start) * i) / (SAMPLES - 1))
-            const sampled = isNight
-                ? getMoonPosition(at, latitude, longitude).altitude
-                : getSolarAltitude(at, latitude, longitude)
-            if (sampled > peak) peak = sampled
+    $effect(() => {
+        const night = isNight
+        // Read so this re-runs each tick and keeps `lastProgress` one step
+        // behind, which is the position the outgoing body has to hold.
+        const current = progress
+        // The first run only establishes the baseline. Animating here would play
+        // the handover on every page load.
+        const flipped =
+            lastPhaseWasNight !== null && lastPhaseWasNight !== night
+        lastPhaseWasNight = night
+        if (!flipped) {
+            lastProgress = current
+            return
         }
 
-        curveCache = { key, peak }
-        return peak
+        heldProgress = lastProgress
+        lastProgress = current
+        handoff = true
+        clearTimeout(swapTimer)
+        clearTimeout(handoffTimer)
+        swapTimer = setTimeout(() => (heldProgress = null), HANDOFF_SWAP_MS)
+        handoffTimer = setTimeout(() => (handoff = false), HANDOFF_MS)
     })
 
-    let arcHeight = $derived(peakAltitude * DEG)
-    let arcPath = $derived(
-        `M ${LEFT} ${HORIZON} A ${(RIGHT - LEFT) / 2} ${arcHeight.toFixed(2)} 0 0 1 ${RIGHT} ${HORIZON}`
+    // The arc is a symmetric dome spanning the active phase. Its shape is fixed
+    // so it always reads as an arc; what stays real is how tall it stands, which
+    // follows how high the sun gets that day. The sun sets the height at night
+    // too, so day and night draw the same dome and the marker simply crosses it
+    // twice. Sizing the night to the moon instead was tried and rejected: the
+    // moon is below the horizon for most of many nights, which flattened the
+    // curve to a line, and it left the two halves of the day unrelated in shape.
+    // Plotting altitude point by point was also tried, and drew a straight-sided
+    // tent rather than an arc.
+    let peakAltitude = $derived.by(() => {
+        if (!coordinates || !state?.sunrise || !state?.sunset) return 0
+
+        // Sunrise and sunset are mirrored about solar noon, so their midpoint is
+        // solar noon exactly -- which is where the day's peak altitude is.
+        const solarNoon = new Date(
+            (state.sunrise.valueOf() + state.sunset.valueOf()) / 2
+        )
+        return getSolarAltitude(
+            solarNoon,
+            coordinates.latitude,
+            coordinates.longitude
+        )
+    })
+
+    let arcHeight = $derived(
+        MIN_HEIGHT + Math.min(90, Math.max(0, peakAltitude)) * DEG
     )
 
-    // x is linear in time so the marker tracks the clock; y puts it on the dome.
-    let markerX = $derived(LEFT + (RIGHT - LEFT) * progress)
-    let markerY = $derived(HORIZON - arcHeight * domeHeight(progress))
+    // The circle through both endpoints that rises `arcHeight` in the middle:
+    // for a chord of half-width w and a sagitta h, the radius is (w^2+h^2)/2h.
+    // A circle rather than a half ellipse because constant curvature is what
+    // reads as round -- an ellipse this wide stands up vertically at the two
+    // ends and then runs flat across the top, which is the shape it was drawn
+    // as before and did not look like an arc.
+    let arcRadius = $derived(
+        (HALF_WIDTH * HALF_WIDTH + arcHeight * arcHeight) / (2 * arcHeight)
+    )
+    // arcHeight never reaches HALF_WIDTH, so this is always the minor arc and
+    // the large-arc flag stays 0.
+    let arcPath = $derived(
+        `M ${LEFT} ${HORIZON} A ${arcRadius.toFixed(2)} ${arcRadius.toFixed(2)} 0 0 1 ${RIGHT} ${HORIZON}`
+    )
+
+    // x is linear in time so the marker tracks the clock; y puts it on the arc.
+    // Mid-handover it is pinned to where the outgoing span left it.
+    let markerProgress = $derived(heldProgress ?? progress)
+    let markerX = $derived(LEFT + (RIGHT - LEFT) * markerProgress)
+    let markerY = $derived(
+        HORIZON - arcRise(offsetAt(markerProgress), arcRadius, arcHeight)
+    )
 
     // The traveled stroke is dashed off by *length* along the arc, but the
-    // marker sits at a fraction of the *width*. On an ellipse those two advance
-    // at different rates -- the ends are steep, so length runs ahead of width
-    // past the midpoint -- and dashing at `progress` directly left the stroke
-    // visibly out in front of the sun. So convert: how much of the arc's length
-    // lies to the left of the marker.
+    // marker sits at a fraction of the *width*. Those two advance at different
+    // rates -- the sloped ends cover more length per unit of width than the top
+    // does -- and dashing at `progress` directly left the stroke visibly out in
+    // front of the sun. On a circle length is exactly proportional to the
+    // central angle, so convert through that.
     let traveledLength = $derived.by(() => {
-        const radius = (RIGHT - LEFT) / 2
-        if (arcHeight <= 0) return progress
-        const total = domeArcLength(0, Math.PI, radius, arcHeight)
-        if (total <= 0) return progress
-        const t = Math.acos(2 * clamp01(progress) - 1)
-        return clamp01(domeArcLength(t, Math.PI, radius, arcHeight) / total)
+        const half = Math.asin(Math.min(1, HALF_WIDTH / arcRadius))
+        if (half <= 0) return progress
+        const angle = Math.asin(offsetAt(progress) / arcRadius)
+        return clamp01((angle + half) / (2 * half))
     })
 
     // The arc always runs left to right through the active phase, so at night
@@ -274,12 +323,20 @@
 
     onDestroy(() => {
         stopTicking()
+        clearTimeout(handoffTimer)
         document.removeEventListener('visibilitychange', handleVisibilityChange)
     })
 </script>
 
 {#if state}
-    <div class="sun-arc" class:night={isNight} role="img" aria-label={label}>
+    <div
+        class="sun-arc"
+        class:night={isNight}
+        class:handoff
+        style="--handoff: {HANDOFF_MS}ms"
+        role="img"
+        aria-label={label}
+    >
         <svg viewBox={VIEWBOX} aria-hidden="true">
             <defs>
                 <!-- Fades the sky out at the left and right so it reads as
@@ -375,8 +432,10 @@
                 stroke-dasharray="{traveledLength} 1"
             />
 
-            <circle class="glow" cx={markerX} cy={markerY} r="8.5" />
-            <circle class="marker" cx={markerX} cy={markerY} r="4.5" />
+            <g class="body">
+                <circle class="glow" cx={markerX} cy={markerY} r="8.5" />
+                <circle class="marker" cx={markerX} cy={markerY} r="4.5" />
+            </g>
         </svg>
 
         <div class="endpoints">
@@ -398,7 +457,6 @@
                 <span>{caption.text}</span>
             </div>
         {/if}
-
     </div>
 {/if}
 
@@ -442,11 +500,19 @@
         stroke-width: 2.5;
         opacity: 0.55;
     }
+    /* Length eases so the minute ticks creep rather than jump, and so the
+       handover reads as the day's light draining back off the arc alongside the
+       body's descent. The colour is held until 0.72s, by which point the trail
+       has drained to nothing and the swap lands on a stroke too short to show
+       it. */
     .traveled {
         fill: none;
         stroke: var(--txt-orange);
         stroke-width: 2.5;
         stroke-linecap: round;
+        transition:
+            stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s,
+            stroke 0.3s linear 0.72s;
     }
     .night .traveled {
         stroke: var(--txt-violet);
@@ -460,15 +526,87 @@
     .glow {
         fill: var(--txt-num);
         opacity: 0.2;
+        /* So the flare scales about the disc rather than the viewBox origin. */
+        transform-box: fill-box;
+        transform-origin: center;
     }
     .night .glow {
         fill: var(--txt-link);
     }
+    /* Like the trail's stroke, the fills are held back to the point where the
+       body is under the horizon, so day and night colours never cross in view. */
     .marker,
     .glow {
         transition:
             cx 0.6s ease-out,
-            cy 0.6s ease-out;
+            cy 0.6s ease-out,
+            fill 0.3s linear 0.72s;
+    }
+
+    /* The one moment the marker must not tween between its two positions. */
+    .handoff .marker,
+    .handoff .glow {
+        transition: fill 0.3s linear 0.72s;
+    }
+
+    .body {
+        transform-box: fill-box;
+        transform-origin: center;
+    }
+    .handoff .body {
+        animation: arc-handoff var(--handoff) both;
+    }
+    .handoff .glow {
+        animation: arc-flare var(--handoff) both;
+    }
+
+    /* Sets, holds under the horizon while the position swaps ends, then rises.
+       The hold from 38% to 66% -- 646ms to 1122ms -- is the cover the swap needs,
+       and HANDOFF_SWAP_MS is timed into the middle of it. */
+    @keyframes arc-handoff {
+        0%,
+        14% {
+            animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.4);
+            transform: translateY(0);
+            opacity: 1;
+        }
+        38%,
+        66% {
+            animation-timing-function: cubic-bezier(0.1, 0.75, 0.3, 1);
+            transform: translateY(13px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* The flare as the body meets the horizon on the way down, and the softer
+       bloom as the incoming one clears it coming back up. */
+    @keyframes arc-flare {
+        0%,
+        14% {
+            transform: scale(1);
+            opacity: 0.2;
+        }
+        24% {
+            transform: scale(2.4);
+            opacity: 0.34;
+        }
+        38%,
+        66% {
+            transform: scale(1);
+            opacity: 0;
+        }
+        84% {
+            transform: scale(1.9);
+            opacity: 0.3;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0.2;
+        }
     }
     .endpoints {
         display: flex;
@@ -505,10 +643,19 @@
     .caption .value {
         color: var(--txt-num);
     }
+    /* The handover is the most motion this widget ever makes, so it is the first
+       thing to go. Everything still lands in the right place, just instantly. */
     @media (prefers-reduced-motion: reduce) {
         .marker,
-        .glow {
+        .glow,
+        .traveled,
+        .handoff .marker,
+        .handoff .glow {
             transition: none;
+        }
+        .handoff .body,
+        .handoff .glow {
+            animation: none;
         }
     }
 </style>
